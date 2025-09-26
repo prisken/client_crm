@@ -7,6 +7,8 @@ struct StageThreeSection: View {
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = ProductPairingViewModel()
+    @State private var selectedProduct: ClientProduct?
+    @State private var showingEditProduct = false
     
     private let productCategories = [
         "Investment", "Medical", "Critical Illness", "Life", "General Insurance", "Savings"
@@ -31,6 +33,10 @@ struct StageThreeSection: View {
                             },
                             onDeleteProduct: { product in
                                 deleteProduct(product)
+                            },
+                            onEditProduct: { product in
+                                selectedProduct = product
+                                showingEditProduct = true
                             }
                         )
                     }
@@ -43,7 +49,8 @@ struct StageThreeSection: View {
                             products: viewModel.products.filter { $0.category == category },
                             isEditMode: isEditMode,
                             onAddProduct: {},
-                            onDeleteProduct: { _ in }
+                            onDeleteProduct: { _ in },
+                            onEditProduct: { _ in }
                         )
                     }
                 }
@@ -68,6 +75,13 @@ struct StageThreeSection: View {
                 }
             )
         }
+        .sheet(isPresented: $showingEditProduct) {
+            if let product = selectedProduct {
+                EditProductSheet(product: product, onSave: {
+                    viewModel.loadData(client: client, context: viewContext)
+                })
+            }
+        }
     }
     
     private func deleteProduct(_ product: ClientProduct) {
@@ -88,6 +102,7 @@ struct ProductCategoryView: View {
     let isEditMode: Bool
     let onAddProduct: () -> Void
     let onDeleteProduct: (ClientProduct) -> Void
+    let onEditProduct: (ClientProduct) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -114,7 +129,8 @@ struct ProductCategoryView: View {
                     ProductCardView(
                         product: product,
                         isEditMode: isEditMode,
-                        onDelete: { onDeleteProduct(product) }
+                        onDelete: { onDeleteProduct(product) },
+                        onEdit: { onEditProduct(product) }
                     )
                 }
             }

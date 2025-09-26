@@ -7,6 +7,10 @@ struct StageTwoSection: View {
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = FactFindingViewModel()
+    @State private var selectedAsset: Asset?
+    @State private var selectedExpense: Expense?
+    @State private var showingEditAsset = false
+    @State private var showingEditExpense = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -38,6 +42,9 @@ struct StageTwoSection: View {
                     ForEach(viewModel.assets) { asset in
                         AssetCardView(asset: asset, isEditMode: isEditMode, onDelete: {
                             deleteAsset(asset)
+                        }, onEdit: {
+                            selectedAsset = asset
+                            showingEditAsset = true
                         })
                     }
                 }
@@ -69,6 +76,9 @@ struct StageTwoSection: View {
                     ForEach(viewModel.expenses) { expense in
                         ExpenseCardView(expense: expense, isEditMode: isEditMode, onDelete: {
                             deleteExpense(expense)
+                        }, onEdit: {
+                            selectedExpense = expense
+                            showingEditExpense = true
                         })
                     }
                 }
@@ -92,6 +102,20 @@ struct StageTwoSection: View {
             AddExpenseSheet(client: client, context: viewContext, onSave: {
                 viewModel.loadData(client: client, context: viewContext)
             })
+        }
+        .sheet(isPresented: $showingEditAsset) {
+            if let asset = selectedAsset {
+                EditAssetSheet(asset: asset, onSave: {
+                    viewModel.loadData(client: client, context: viewContext)
+                })
+            }
+        }
+        .sheet(isPresented: $showingEditExpense) {
+            if let expense = selectedExpense {
+                EditExpenseSheet(expense: expense, onSave: {
+                    viewModel.loadData(client: client, context: viewContext)
+                })
+            }
         }
     }
     
