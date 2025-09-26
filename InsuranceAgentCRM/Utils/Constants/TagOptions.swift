@@ -139,3 +139,116 @@ struct TagOptions {
         "Life Coaching", "Therapy", "Counseling", "Support Group", "Recovery Group"
     ]
 }
+
+// MARK: - Relationship Options Constants
+struct RelationshipOptions {
+    
+    // MARK: - Relationship Types
+    enum RelationshipType: String, CaseIterable, Identifiable {
+        case parent = "Parent"
+        case child = "Child"
+        case spouse = "Spouse"
+        case sibling = "Sibling"
+        case guardian = "Guardian"
+        case ward = "Ward"
+        case grandparent = "Grandparent"
+        case grandchild = "Grandchild"
+        case uncle = "Uncle"
+        case aunt = "Aunt"
+        case nephew = "Nephew"
+        case niece = "Niece"
+        case cousin = "Cousin"
+        case inLaw = "In-Law"
+        case stepParent = "Step-Parent"
+        case stepChild = "Step-Child"
+        case stepSibling = "Step-Sibling"
+        case halfSibling = "Half-Sibling"
+        case businessPartner = "Business Partner"
+        case employer = "Employer"
+        case employee = "Employee"
+        case friend = "Friend"
+        case neighbor = "Neighbor"
+        case other = "Other"
+        
+        var id: String { self.rawValue }
+        
+        // MARK: - Bidirectional Mapping
+        var inverseRelationship: RelationshipType {
+            switch self {
+            case .parent: return .child
+            case .child: return .parent
+            case .spouse: return .spouse
+            case .sibling: return .sibling
+            case .guardian: return .ward
+            case .ward: return .guardian
+            case .grandparent: return .grandchild
+            case .grandchild: return .grandparent
+            case .uncle: return .nephew
+            case .aunt: return .niece
+            case .nephew: return .uncle
+            case .niece: return .aunt
+            case .cousin: return .cousin
+            case .inLaw: return .inLaw
+            case .stepParent: return .stepChild
+            case .stepChild: return .stepParent
+            case .stepSibling: return .stepSibling
+            case .halfSibling: return .halfSibling
+            case .businessPartner: return .businessPartner
+            case .employer: return .employee
+            case .employee: return .employer
+            case .friend: return .friend
+            case .neighbor: return .neighbor
+            case .other: return .other
+            }
+        }
+        
+        // MARK: - Categories
+        var category: RelationshipCategory {
+            switch self {
+            case .parent, .child, .grandparent, .grandchild, .stepParent, .stepChild:
+                return .family
+            case .spouse, .sibling, .stepSibling, .halfSibling:
+                return .immediateFamily
+            case .uncle, .aunt, .nephew, .niece, .cousin, .inLaw:
+                return .extendedFamily
+            case .guardian, .ward:
+                return .guardianship
+            case .businessPartner, .employer, .employee:
+                return .business
+            case .friend, .neighbor, .other:
+                return .other
+            }
+        }
+        
+        var icon: String {
+            switch self.category {
+            case .immediateFamily: return "person.2.fill"
+            case .family: return "person.3.fill"
+            case .extendedFamily: return "person.3.sequence.fill"
+            case .guardianship: return "shield.fill"
+            case .business: return "briefcase.fill"
+            case .other: return "person.circle.fill"
+            }
+        }
+    }
+    
+    enum RelationshipCategory: String, CaseIterable {
+        case immediateFamily = "Immediate Family"
+        case family = "Family"
+        case extendedFamily = "Extended Family"
+        case guardianship = "Guardianship"
+        case business = "Business"
+        case other = "Other"
+        
+        var icon: String {
+            switch self {
+            case .immediateFamily: return "person.2.fill"
+            case .family: return "person.3.fill"
+            case .extendedFamily: return "person.3.sequence.fill"
+            case .guardianship: return "shield.fill"
+            case .business: return "briefcase.fill"
+            case .other: return "person.circle.fill"
+            }
+        }
+    }
+}

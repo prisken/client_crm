@@ -11,6 +11,11 @@ struct StageOneSection: View {
     @State private var selectedLifeStage: Set<String> = []
     @State private var refreshTrigger = false
     
+    // MARK: - Collapse States
+    @State private var isInterestsCollapsed = false
+    @State private var isSocialStatusCollapsed = false
+    @State private var isLifeStageCollapsed = false
+    
     // MARK: - Tag Options
     private let interestOptions = TagOptions.interestOptions
     private let socialStatusOptions = TagOptions.socialStatusOptions
@@ -48,23 +53,47 @@ struct StageOneSection: View {
     // MARK: - Edit Mode View
     private var editModeView: some View {
         VStack(spacing: 20) {
-            TagSelectionView(
+            // Interests Section
+            CollapsibleTagSection(
                 title: "Interests",
-                options: interestOptions,
-                selectedTags: $selectedInterests
-            )
+                isCollapsed: $isInterestsCollapsed,
+                selectedCount: selectedInterests.count,
+                totalCount: interestOptions.count
+            ) {
+                TagSelectionView(
+                    title: "Interests",
+                    options: interestOptions,
+                    selectedTags: $selectedInterests
+                )
+            }
             
-            TagSelectionView(
+            // Social Status Section
+            CollapsibleTagSection(
                 title: "Social Status",
-                options: socialStatusOptions,
-                selectedTags: $selectedSocialStatus
-            )
+                isCollapsed: $isSocialStatusCollapsed,
+                selectedCount: selectedSocialStatus.count,
+                totalCount: socialStatusOptions.count
+            ) {
+                TagSelectionView(
+                    title: "Social Status",
+                    options: socialStatusOptions,
+                    selectedTags: $selectedSocialStatus
+                )
+            }
             
-            TagSelectionView(
+            // Life Stage Section
+            CollapsibleTagSection(
                 title: "Life Stage",
-                options: lifeStageOptions,
-                selectedTags: $selectedLifeStage
-            )
+                isCollapsed: $isLifeStageCollapsed,
+                selectedCount: selectedLifeStage.count,
+                totalCount: lifeStageOptions.count
+            ) {
+                TagSelectionView(
+                    title: "Life Stage",
+                    options: lifeStageOptions,
+                    selectedTags: $selectedLifeStage
+                )
+            }
         }
     }
     
@@ -72,15 +101,33 @@ struct StageOneSection: View {
     private var viewModeView: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let interests = client.interests as? [String], !interests.isEmpty {
-                TagDisplayView(title: "Interests", tags: interests)
+                CollapsibleDisplaySection(
+                    title: "Interests",
+                    isCollapsed: $isInterestsCollapsed,
+                    tagCount: interests.count
+                ) {
+                    TagDisplayView(title: "Interests", tags: interests)
+                }
             }
             
             if let socialStatus = client.socialStatus as? [String], !socialStatus.isEmpty {
-                TagDisplayView(title: "Social Status", tags: socialStatus)
+                CollapsibleDisplaySection(
+                    title: "Social Status",
+                    isCollapsed: $isSocialStatusCollapsed,
+                    tagCount: socialStatus.count
+                ) {
+                    TagDisplayView(title: "Social Status", tags: socialStatus)
+                }
             }
             
             if let lifeStage = client.lifeStage as? [String], !lifeStage.isEmpty {
-                TagDisplayView(title: "Life Stage", tags: lifeStage)
+                CollapsibleDisplaySection(
+                    title: "Life Stage",
+                    isCollapsed: $isLifeStageCollapsed,
+                    tagCount: lifeStage.count
+                ) {
+                    TagDisplayView(title: "Life Stage", tags: lifeStage)
+                }
             }
             
             if !hasAnyTags {
@@ -143,6 +190,122 @@ struct StageOneSection: View {
             }
         } catch {
             logError("Failed to save client connection data: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Collapsible Tag Section
+struct CollapsibleTagSection<Content: View>: View {
+    let title: String
+    @Binding var isCollapsed: Bool
+    let selectedCount: Int
+    let totalCount: Int
+    @ViewBuilder let content: () -> Content
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with collapse/expand button
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isCollapsed.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                        .animation(.easeInOut(duration: 0.2), value: isCollapsed)
+                    
+                    Text(title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    // Selection count badge
+                    if selectedCount > 0 {
+                        Text("\(selectedCount) selected")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue)
+                            .cornerRadius(8)
+                    }
+                    
+                    // Total count
+                    Text("\(totalCount) options")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color(.systemGray5))
+                .cornerRadius(8)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Content (collapsible)
+            if !isCollapsed {
+                content()
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+}
+
+// MARK: - Collapsible Display Section
+struct CollapsibleDisplaySection<Content: View>: View {
+    let title: String
+    @Binding var isCollapsed: Bool
+    let tagCount: Int
+    @ViewBuilder let content: () -> Content
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with collapse/expand button
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isCollapsed.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                        .animation(.easeInOut(duration: 0.2), value: isCollapsed)
+                    
+                    Text(title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    // Tag count badge
+                    Text("\(tagCount) tags")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green)
+                        .cornerRadius(8)
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color(.systemGray5))
+                .cornerRadius(8)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Content (collapsible)
+            if !isCollapsed {
+                content()
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
     }
 }

@@ -100,6 +100,9 @@ struct BasicInfoSection: View {
         .onAppear {
             loadClientData()
         }
+        .onChange(of: client.id) { _, _ in
+            loadClientData()
+        }
         .onChange(of: isEditMode) { _, editing in
             if !editing {
                 saveClientData()

@@ -55,6 +55,9 @@ struct StageThreeSection: View {
         .onAppear {
             viewModel.loadData(client: client, context: viewContext)
         }
+        .onChange(of: client.id) { _, _ in
+            viewModel.loadData(client: client, context: viewContext)
+        }
         .sheet(isPresented: $viewModel.showingAddProduct) {
             AddProductSheet(
                 client: client,

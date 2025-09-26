@@ -41,6 +41,9 @@ struct RetirementDateSection: View {
         .onAppear {
             retirementDate = client.retirementDate ?? Date()
         }
+        .onChange(of: client.id) { _, _ in
+            retirementDate = client.retirementDate ?? Date()
+        }
         .onChange(of: isEditMode) { _, editing in
             if !editing {
                 saveRetirementDate()

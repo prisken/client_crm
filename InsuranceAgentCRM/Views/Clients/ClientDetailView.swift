@@ -45,19 +45,22 @@ struct ClientDetailView: View {
                 // 1. Basic Info Section
                 BasicInfoSection(client: client, isEditMode: $isEditMode)
                 
-                // 2. Task Checklist Section
+                // 2. Relationships Section
+                RelationshipSection(client: client, isEditMode: isEditMode)
+                
+                // 3. Task Checklist Section
                 TaskChecklistSection(client: client)
                 
-                // 3. Stage One: Introduction and Connection
+                // 4. Stage One: Introduction and Connection
                 StageOneSection(client: client, isEditMode: isEditMode)
                 
-                // 4. Stage Two: Fact Finding
+                // 5. Stage Two: Fact Finding
                 StageTwoSection(client: client, isEditMode: isEditMode)
                 
-                // 5. Retirement Date Section
+                // 6. Retirement Date Section
                 RetirementDateSection(client: client, isEditMode: isEditMode)
                 
-                // 6. Stage Three: Product Pairing
+                // 7. Stage Three: Product Pairing
                 StageThreeSection(client: client, isEditMode: isEditMode)
             }
             .padding()

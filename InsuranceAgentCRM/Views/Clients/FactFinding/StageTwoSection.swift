@@ -80,6 +80,9 @@ struct StageTwoSection: View {
         .onAppear {
             viewModel.loadData(client: client, context: viewContext)
         }
+        .onChange(of: client.id) { _, _ in
+            viewModel.loadData(client: client, context: viewContext)
+        }
         .sheet(isPresented: $viewModel.showingAddAsset) {
             AddAssetSheet(client: client, context: viewContext, onSave: {
                 viewModel.loadData(client: client, context: viewContext)
