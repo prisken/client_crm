@@ -113,7 +113,7 @@ class TagManager: ObservableObject {
             
             try context.save()
         } catch {
-            print("Error removing tag from clients: \(error)")
+            logError("Error removing tag from clients: \(error.localizedDescription)")
         }
     }
     

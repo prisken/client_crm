@@ -62,12 +62,11 @@ struct ClientTaskRowView: View {
             }
         }
         .padding(.vertical, 4)
-        .confirmationDialog("Delete Task", isPresented: $showingDeleteConfirmation) {
-            Button("Delete", role: .destructive, action: onDelete)
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Are you sure you want to delete '\(task.title ?? "this task")'? This action cannot be undone.")
-        }
+        .taskConfirmationDialog(
+            task: task,
+            isPresented: $showingDeleteConfirmation,
+            onConfirm: onDelete
+        )
     }
 }
 

@@ -40,12 +40,11 @@ struct BaseCardView<Content: View>: View {
         .background(Color(.systemBackground))
         .cornerRadius(8)
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        .confirmationDialog("Delete Item", isPresented: $showingDeleteConfirmation) {
-            Button("Delete", role: .destructive, action: onDelete)
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Are you sure you want to delete this item? This action cannot be undone.")
-        }
+        .confirmationDialog(
+            type: .deleteItem,
+            isPresented: $showingDeleteConfirmation,
+            onConfirm: onDelete
+        )
     }
 }
 

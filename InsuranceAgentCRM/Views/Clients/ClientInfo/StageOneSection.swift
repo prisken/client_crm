@@ -192,7 +192,7 @@ struct StageOneSection: View {
             self.refreshTrigger.toggle()
         }
         
-        print("🗑️ Tag '\(tag)' deleted from category '\(category.rawValue)' - removed from client selections")
+        logInfo("Tag '\(tag)' deleted from category '\(category.rawValue)' - removed from client selections")
     }
     
     private func loadClientData() {

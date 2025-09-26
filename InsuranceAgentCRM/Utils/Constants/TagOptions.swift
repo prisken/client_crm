@@ -1,5 +1,3 @@
-import Foundation
-
 // MARK: - Tag Options Constants
 struct TagOptions {
     

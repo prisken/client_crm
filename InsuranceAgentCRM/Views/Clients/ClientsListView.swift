@@ -30,7 +30,7 @@ struct ClientsListView: View {
                             }
                             
                             Button("Edit") {
-                                // TODO: Add edit functionality
+                                selectedClient = client
                             }
                             .tint(.blue)
                         }
@@ -40,16 +40,14 @@ struct ClientsListView: View {
                 .listStyle(PlainListStyle())
             }
         }
-        .confirmationDialog("Delete Client", isPresented: $showingDeleteConfirmation) {
-            Button("Delete", role: .destructive, action: confirmDeleteClient)
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            if let client = clientToDelete {
-                Text("Are you sure you want to delete '\(client.firstName ?? "") \(client.lastName ?? "")'? This action cannot be undone and will remove all associated data.")
-            } else {
-                Text("Are you sure you want to delete the selected clients? This action cannot be undone and will remove all associated data.")
-            }
-        }
+        .confirmationDialog(
+            type: .deleteClient,
+            isPresented: $showingDeleteConfirmation,
+            onConfirm: confirmDeleteClient,
+            customMessage: clientToDelete != nil ? 
+                "Are you sure you want to delete '\(clientToDelete?.firstName ?? "") \(clientToDelete?.lastName ?? "")'? This action cannot be undone and will remove all associated data." :
+                "Are you sure you want to delete the selected clients? This action cannot be undone and will remove all associated data."
+        )
     }
     
     private var filteredClients: [Client] {
@@ -87,7 +85,7 @@ struct ClientsListView: View {
                 try viewModel.context.save()
                 viewModel.loadClients(context: viewModel.context)
             } catch {
-                print("Error deleting client: \(error)")
+                logError("Error deleting client: \(error.localizedDescription)")
             }
         }
         
