@@ -132,7 +132,6 @@ struct DynamicTagSelectionView: View {
         let trimmedTag = newTagText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTag.isEmpty else { return }
         
-        print("DEBUG: DynamicTagSelectionView adding tag '\(trimmedTag)' to category '\(category.rawValue)'")
         tagManager.addTag(trimmedTag, to: category)
         newTagText = ""
         showingAddTag = false

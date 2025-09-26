@@ -108,6 +108,15 @@ struct StageTwoSection: View {
                 EditAssetSheet(asset: asset, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                 })
+            } else {
+                // Fallback view if asset is nil
+                VStack {
+                    Text("Asset not found")
+                        .font(.title2)
+                    Text("Please try again")
+                        .foregroundColor(.secondary)
+                }
+                .padding()
             }
         }
         .sheet(isPresented: $showingEditExpense) {
@@ -115,6 +124,15 @@ struct StageTwoSection: View {
                 EditExpenseSheet(expense: expense, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                 })
+            } else {
+                // Fallback view if expense is nil
+                VStack {
+                    Text("Expense not found")
+                        .font(.title2)
+                    Text("Please try again")
+                        .foregroundColor(.secondary)
+                }
+                .padding()
             }
         }
     }

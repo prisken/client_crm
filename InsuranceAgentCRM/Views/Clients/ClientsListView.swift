@@ -6,6 +6,8 @@ struct ClientsListView: View {
     let searchText: String
     @Binding var selectedClient: Client?
     let onDeleteClient: (Client) -> Void
+    @State private var showingDeleteConfirmation = false
+    @State private var clientToDelete: Client?
     
     var body: some View {
         VStack {
@@ -38,6 +40,16 @@ struct ClientsListView: View {
                 .listStyle(PlainListStyle())
             }
         }
+        .confirmationDialog("Delete Client", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive, action: confirmDeleteClient)
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            if let client = clientToDelete {
+                Text("Are you sure you want to delete '\(client.firstName ?? "") \(client.lastName ?? "")'? This action cannot be undone and will remove all associated data.")
+            } else {
+                Text("Are you sure you want to delete the selected clients? This action cannot be undone and will remove all associated data.")
+            }
+        }
     }
     
     private var filteredClients: [Client] {
@@ -54,11 +66,22 @@ struct ClientsListView: View {
     }
     
     private func deleteClients(offsets: IndexSet) {
+        if offsets.count == 1 {
+            let client = filteredClients[offsets.first!]
+            clientToDelete = client
+            showingDeleteConfirmation = true
+        } else {
+            // For multiple deletions, show a different confirmation
+            clientToDelete = nil
+            showingDeleteConfirmation = true
+        }
+    }
+    
+    private func confirmDeleteClient() {
+        guard let client = clientToDelete else { return }
+        
         withAnimation {
-            for index in offsets {
-                let client = filteredClients[index]
-                viewModel.context.delete(client)
-            }
+            viewModel.context.delete(client)
             
             do {
                 try viewModel.context.save()
@@ -67,6 +90,8 @@ struct ClientsListView: View {
                 print("Error deleting client: \(error)")
             }
         }
+        
+        clientToDelete = nil
     }
 }
 

@@ -80,6 +80,15 @@ struct StageThreeSection: View {
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                 })
+            } else {
+                // Fallback view if product is nil
+                VStack {
+                    Text("Product not found")
+                        .font(.title2)
+                    Text("Please try again")
+                        .foregroundColor(.secondary)
+                }
+                .padding()
             }
         }
     }

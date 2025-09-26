@@ -106,6 +106,7 @@ struct TasksView: View {
         } detail: {
             if let selectedTask = selectedTask {
                 ClientTaskDetailView(task: selectedTask)
+                    .id(selectedTask.id) // Ensure unique view for each task
             } else {
                 VStack {
                     Image(systemName: "doc.text")
@@ -386,13 +387,79 @@ struct AddTaskView: View {
     }
 }
 
+// MARK: - Task Remark Manager
+class TaskRemarkManager: ObservableObject {
+    @Published var remarks: [TaskRemark] = []
+    private let context: NSManagedObjectContext
+    
+    init(context: NSManagedObjectContext) {
+        self.context = context
+    }
+    
+    func loadRemarks(for task: ClientTask) {
+        if let taskRemarks = task.remarks as? Set<TaskRemark> {
+            remarks = Array(taskRemarks).sorted { $0.createdAt ?? Date() > $1.createdAt ?? Date() }
+        } else {
+            remarks = []
+        }
+    }
+    
+    func addRemark(content: String, to task: ClientTask) {
+        let remark = TaskRemark(context: context)
+        remark.id = UUID()
+        remark.content = content
+        remark.createdAt = Date()
+        remark.updatedAt = Date()
+        remark.task = task
+        
+        do {
+            try context.save()
+            loadRemarks(for: task)
+            print("✅ New remark added to task: \(task.title ?? "Unknown")")
+        } catch {
+            print("❌ Error adding remark: \(error)")
+        }
+    }
+    
+    func updateRemark(_ remark: TaskRemark, newContent: String) {
+        remark.content = newContent
+        remark.updatedAt = Date()
+        
+        do {
+            try context.save()
+            print("✅ Remark updated: \(remark.content ?? "Unknown")")
+        } catch {
+            print("❌ Error updating remark: \(error)")
+        }
+    }
+    
+    func deleteRemark(_ remark: TaskRemark) {
+        context.delete(remark)
+        
+        do {
+            try context.save()
+            print("✅ Remark deleted")
+        } catch {
+            print("❌ Error deleting remark: \(error)")
+        }
+    }
+}
+
 // MARK: - Client Task Detail View
 struct ClientTaskDetailView: View {
     let task: ClientTask
     @Environment(\.managedObjectContext) private var viewContext
-    @State private var remarks = ""
+    @StateObject private var remarkManager: TaskRemarkManager
     @State private var showingAddRemark = false
     @State private var newRemark = ""
+    @State private var selectedRemark: TaskRemark?
+    @State private var showingEditRemark = false
+    @State private var editingRemark = ""
+    
+    init(task: ClientTask) {
+        self.task = task
+        self._remarkManager = StateObject(wrappedValue: TaskRemarkManager(context: PersistenceController.shared.container.viewContext))
+    }
     
     var body: some View {
         ScrollView {
@@ -456,14 +523,27 @@ struct ClientTaskDetailView: View {
                         .controlSize(.small)
                     }
                     
-                    if remarks.isEmpty {
+                    if remarkManager.remarks.isEmpty {
                         Text("No remarks added yet")
                             .foregroundColor(.secondary)
                             .font(.subheadline)
                     } else {
-                        Text(remarks)
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(remarkManager.remarks) { remark in
+                                NewRemarkRowView(
+                                    remark: remark,
+                                    onEdit: {
+                                        selectedRemark = remark
+                                        editingRemark = remark.content ?? ""
+                                        showingEditRemark = true
+                                    },
+                                    onDelete: {
+                                        remarkManager.deleteRemark(remark)
+                                        remarkManager.loadRemarks(for: task)
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
                 .padding()
@@ -475,32 +555,31 @@ struct ClientTaskDetailView: View {
         .navigationTitle("Task Details")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            loadRemarks()
+            remarkManager.loadRemarks(for: task)
         }
+        .id(task.id) // Ensure unique view for each task
         .sheet(isPresented: $showingAddRemark) {
-            AddRemarkSheet(remarks: $remarks, newRemark: $newRemark, onSave: saveRemark)
+            NewAddRemarkSheet(
+                newRemark: $newRemark,
+                onSave: {
+                    remarkManager.addRemark(content: newRemark, to: task)
+                    newRemark = ""
+                }
+            )
+        }
+        .sheet(isPresented: $showingEditRemark) {
+            NewEditRemarkSheet(
+                remark: $editingRemark,
+                onSave: {
+                    if let selectedRemark = selectedRemark {
+                        remarkManager.updateRemark(selectedRemark, newContent: editingRemark)
+                        remarkManager.loadRemarks(for: task)
+                    }
+                }
+            )
         }
     }
     
-    private func loadRemarks() {
-        // For now, we'll use a simple remarks field
-        // In a real app, you'd have a separate remarks entity
-        remarks = "" // ClientTask doesn't have a notes field, so we'll start empty
-    }
-    
-    private func saveRemark() {
-        // For now, we'll just update the updatedAt timestamp
-        // In a real app, you'd save to a remarks entity
-        task.updatedAt = Date()
-        
-        do {
-            try viewContext.save()
-            loadRemarks()
-            newRemark = ""
-        } catch {
-            print("Error saving remark: \(error)")
-        }
-    }
 }
 
 struct DetailRow: View {
@@ -586,6 +665,148 @@ private func priorityText(priority: Int) -> String {
     }
 }
 
+// MARK: - New Remark Row View
+struct NewRemarkRowView: View {
+    let remark: TaskRemark
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    @State private var showingDeleteConfirmation = false
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(remark.content ?? "")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                
+                HStack {
+                    Text("Created: \(remark.createdAt?.formatted(date: .abbreviated, time: .shortened) ?? "Unknown")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    if let updatedAt = remark.updatedAt, updatedAt != remark.createdAt {
+                        Text("• Updated: \(updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 8) {
+                Button(action: onEdit) {
+                    Image(systemName: "pencil.circle")
+                        .foregroundColor(.blue)
+                        .font(.title3)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Button(action: {
+                    showingDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash.circle")
+                        .foregroundColor(.red)
+                        .font(.title3)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(8)
+        .confirmationDialog("Delete Remark", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete this remark?")
+        }
+    }
+}
+
+// MARK: - New Add Remark Sheet
+struct NewAddRemarkSheet: View {
+    @Binding var newRemark: String
+    let onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Add New Remark")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .padding(.top)
+                
+                TextField("Enter your remark", text: $newRemark, axis: .vertical)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .lineLimit(5...10)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Add Remark")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Add") {
+                        onSave()
+                        dismiss()
+                    }
+                    .disabled(newRemark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - New Edit Remark Sheet
+struct NewEditRemarkSheet: View {
+    @Binding var remark: String
+    let onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Edit Remark")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .padding(.top)
+                
+                TextField("Edit your remark", text: $remark, axis: .vertical)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .lineLimit(5...10)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Edit Remark")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        onSave()
+                        dismiss()
+                    }
+                    .disabled(remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+}
+
 struct AddRemarkSheet: View {
     @Binding var remarks: String
     @Binding var newRemark: String
@@ -595,9 +816,36 @@ struct AddRemarkSheet: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                TextField("Add a remark or follow-up note", text: $newRemark, axis: .vertical)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .lineLimit(5...10)
+                // Existing remarks
+                if !remarks.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Existing Remarks")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        ScrollView {
+                            Text(remarks)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxHeight: 150)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                    }
+                }
+                
+                // New remark input
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Add New Remark")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    TextField("Add a remark or follow-up note", text: $newRemark, axis: .vertical)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .lineLimit(5...10)
+                }
                 
                 Spacer()
             }
@@ -615,7 +863,7 @@ struct AddRemarkSheet: View {
                         onSave()
                         dismiss()
                     }
-                    .disabled(newRemark.isEmpty)
+                    .disabled(newRemark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }

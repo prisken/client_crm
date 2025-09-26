@@ -7,6 +7,7 @@ struct ClientTaskRowView: View {
     let onToggle: () -> Void
     let onDelete: () -> Void
     let onCollapse: () -> Void
+    @State private var showingDeleteConfirmation = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -37,7 +38,9 @@ struct ClientTaskRowView: View {
                 .buttonStyle(PlainButtonStyle())
                 .help(isCollapsed ? "Expand details" : "Collapse details")
                 
-                Button(action: onDelete) {
+                Button(action: {
+                    showingDeleteConfirmation = true
+                }) {
                     Image(systemName: "trash")
                         .foregroundColor(.red)
                         .font(.title3)
@@ -59,6 +62,12 @@ struct ClientTaskRowView: View {
             }
         }
         .padding(.vertical, 4)
+        .confirmationDialog("Delete Task", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete '\(task.title ?? "this task")'? This action cannot be undone.")
+        }
     }
 }
 

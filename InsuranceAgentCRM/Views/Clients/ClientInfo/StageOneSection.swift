@@ -52,6 +52,11 @@ struct StageOneSection: View {
                 saveClientData()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .tagDeleted)) { notification in
+            if let data = notification.object as? (tag: String, category: TagCategory) {
+                handleTagDeleted(tag: data.tag, category: data.category)
+            }
+        }
     }
     
     // MARK: - Edit Mode View
@@ -168,6 +173,26 @@ struct StageOneSection: View {
         selectedSocialStatus = Set()
         selectedLifeStage = Set()
         loadClientData()
+    }
+    
+    // MARK: - Handle Tag Deletion
+    private func handleTagDeleted(tag: String, category: TagCategory) {
+        // Remove the deleted tag from the current client's selections
+        switch category {
+        case .interest:
+            selectedInterests.remove(tag)
+        case .socialStatus:
+            selectedSocialStatus.remove(tag)
+        case .lifeStage:
+            selectedLifeStage.remove(tag)
+        }
+        
+        // Force UI refresh
+        DispatchQueue.main.async {
+            self.refreshTrigger.toggle()
+        }
+        
+        print("🗑️ Tag '\(tag)' deleted from category '\(category.rawValue)' - removed from client selections")
     }
     
     private func loadClientData() {

@@ -160,7 +160,6 @@ struct AddClientView: View {
             
             // Show debug info in UI
             let debugMessage = "Saved: \(client.firstName ?? "") \(client.lastName ?? "")\nTotal clients: \(savedClients.count)\nStore: \(viewContext.persistentStoreCoordinator?.persistentStores.first?.url?.lastPathComponent ?? "Unknown")"
-            print("🔍 DEBUG UI: \(debugMessage)")
             
             // Show alert with debug info
             DispatchQueue.main.async {

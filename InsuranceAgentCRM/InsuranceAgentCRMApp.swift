@@ -13,14 +13,8 @@ struct InsuranceAgentCRMApp: App {
     }
     
     init() {
-        print("🔍 App initialized with persistent store")
-        print("🔍 PersistenceController.shared: \(persistenceController)")
-        print("🔍 Container: \(persistenceController.container)")
-        print("🔍 ViewContext: \(persistenceController.container.viewContext)")
-        
         // Force Core Data to initialize
         let _ = persistenceController.container.viewContext
-        print("🔍 Core Data initialized successfully")
     }
 }
 

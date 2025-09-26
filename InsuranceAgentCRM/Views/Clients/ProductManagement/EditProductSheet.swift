@@ -5,7 +5,6 @@ import CoreData
 struct EditProductSheet: View {
     let product: ClientProduct
     let onSave: () -> Void
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var name: String = ""
@@ -16,69 +15,71 @@ struct EditProductSheet: View {
     @State private var status: String = ""
     @State private var description: String = ""
     
-    private let categories = [
-        "Investment", "Medical", "Critical Illness", "Life", "General Insurance", "Savings"
-    ]
-    
-    private let statuses = [
-        "Proposed", "Under Review", "Approved", "Active", "Cancelled", "Expired"
-    ]
-    
     var body: some View {
-        NavigationView {
-            Form {
-                Section("Product Details") {
-                    TextField("Product Name", text: $name)
-                    
-                    Picker("Category", selection: $category) {
-                        ForEach(categories, id: \.self) { cat in
-                            Text(cat).tag(cat)
-                        }
-                    }
-                    
-                    TextField("Coverage Amount", text: $amount)
-                        .keyboardType(.decimalPad)
-                    
-                    TextField("Premium Amount", text: $premium)
-                        .keyboardType(.decimalPad)
-                    
-                    TextField("Coverage Details", text: $coverage, axis: .vertical)
-                        .lineLimit(2...4)
-                    
-                    Picker("Status", selection: $status) {
-                        ForEach(statuses, id: \.self) { stat in
-                            Text(stat).tag(stat)
-                        }
-                    }
-                    
-                    TextField("Description (Optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+        BaseEditSheet(
+            title: "Edit Product",
+            onSave: {
+                saveProduct()
             }
-            .navigationTitle("Edit Product")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+        ) {
+            Section("Product Details") {
+                FormTextField(title: "Product Name", text: $name)
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveProduct()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(name.isEmpty || category.isEmpty || amount.isEmpty || premium.isEmpty)
-                }
+                FormPicker(
+                    title: "Category",
+                    selection: $category,
+                    options: FormConstants.productCategories
+                )
+                
+                FormTextField(
+                    title: "Coverage Amount",
+                    text: $amount,
+                    keyboardType: .decimalPad
+                )
+                
+                FormTextField(
+                    title: "Premium Amount",
+                    text: $premium,
+                    keyboardType: .decimalPad
+                )
+                
+                FormTextEditor(
+                    title: "Coverage Details",
+                    text: $coverage,
+                    lineLimit: 2...4
+                )
+                
+                FormPicker(
+                    title: "Status",
+                    selection: $status,
+                    options: FormConstants.productStatuses
+                )
+                
+                FormTextEditor(
+                    title: "Description (Optional)",
+                    text: $description
+                )
             }
         }
         .onAppear {
+            // Ensure data is loaded when sheet appears
+            DispatchQueue.main.async {
+                loadProductData()
+            }
+        }
+        .onChange(of: product.id) { _, _ in
+            // Reload data if product changes
             loadProductData()
         }
     }
     
     private func loadProductData() {
+        // Ensure we have a valid product
+        guard product.managedObjectContext != nil else {
+            print("Warning: Product context is nil")
+            return
+        }
+        
         name = product.name ?? ""
         category = product.category ?? ""
         amount = String(product.amount?.doubleValue ?? 0)
@@ -86,6 +87,7 @@ struct EditProductSheet: View {
         coverage = product.coverage ?? ""
         status = product.status ?? ""
         description = product.assetDescription ?? ""
+        
     }
     
     private func saveProduct() {
@@ -101,7 +103,6 @@ struct EditProductSheet: View {
         do {
             try viewContext.save()
             onSave()
-            dismiss()
         } catch {
             print("Error saving product: \(error)")
         }

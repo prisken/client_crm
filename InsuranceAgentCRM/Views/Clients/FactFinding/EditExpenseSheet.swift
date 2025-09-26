@@ -5,7 +5,6 @@ import CoreData
 struct EditExpenseSheet: View {
     let expense: Expense
     let onSave: () -> Void
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var name: String = ""
@@ -14,69 +13,65 @@ struct EditExpenseSheet: View {
     @State private var frequency: String = ""
     @State private var description: String = ""
     
-    private let expenseTypes = [
-        "Housing", "Food", "Transportation", "Healthcare", "Education",
-        "Entertainment", "Utilities", "Insurance", "Debt", "Other"
-    ]
-    
-    private let frequencies = [
-        "Daily", "Weekly", "Monthly", "Quarterly", "Yearly", "One-time"
-    ]
-    
     var body: some View {
-        NavigationView {
-            Form {
-                Section("Expense Details") {
-                    TextField("Expense Name", text: $name)
-                    
-                    Picker("Expense Type", selection: $type) {
-                        ForEach(expenseTypes, id: \.self) { expenseType in
-                            Text(expenseType).tag(expenseType)
-                        }
-                    }
-                    
-                    TextField("Amount", text: $amount)
-                        .keyboardType(.decimalPad)
-                    
-                    Picker("Frequency", selection: $frequency) {
-                        ForEach(frequencies, id: \.self) { freq in
-                            Text(freq).tag(freq)
-                        }
-                    }
-                    
-                    TextField("Description (Optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+        BaseEditSheet(
+            title: "Edit Expense",
+            onSave: {
+                saveExpense()
             }
-            .navigationTitle("Edit Expense")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+        ) {
+            Section("Expense Details") {
+                FormTextField(title: "Expense Name", text: $name)
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveExpense()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(name.isEmpty || type.isEmpty || amount.isEmpty || frequency.isEmpty)
-                }
+                FormPicker(
+                    title: "Expense Type",
+                    selection: $type,
+                    options: FormConstants.expenseTypes
+                )
+                
+                FormTextField(
+                    title: "Amount",
+                    text: $amount,
+                    keyboardType: .decimalPad
+                )
+                
+                FormPicker(
+                    title: "Frequency",
+                    selection: $frequency,
+                    options: FormConstants.expenseFrequencies
+                )
+                
+                FormTextEditor(
+                    title: "Description (Optional)",
+                    text: $description
+                )
             }
         }
         .onAppear {
+            // Ensure data is loaded when sheet appears
+            DispatchQueue.main.async {
+                loadExpenseData()
+            }
+        }
+        .onChange(of: expense.id) { _, _ in
+            // Reload data if expense changes
             loadExpenseData()
         }
     }
     
     private func loadExpenseData() {
+        // Ensure we have a valid expense
+        guard expense.managedObjectContext != nil else {
+            print("Warning: Expense context is nil")
+            return
+        }
+        
         name = expense.name ?? ""
         type = expense.type ?? ""
         amount = String(expense.amount?.doubleValue ?? 0)
         frequency = expense.frequency ?? ""
         description = expense.assetDescription ?? ""
+        
     }
     
     private func saveExpense() {
@@ -90,7 +85,6 @@ struct EditExpenseSheet: View {
         do {
             try viewContext.save()
             onSave()
-            dismiss()
         } catch {
             print("Error saving expense: \(error)")
         }

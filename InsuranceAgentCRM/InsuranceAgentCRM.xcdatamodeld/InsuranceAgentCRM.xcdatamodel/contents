@@ -142,9 +142,18 @@
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="title" optional="NO" attributeType="String"/>
         <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="client" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="Client" inverseName="clientTasks" inverseEntity="Client"/>
+        <relationship name="remarks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TaskRemark" inverseName="task" inverseEntity="TaskRemark"/>
+    </entity>
+    <entity name="TaskRemark" representedClassName="TaskRemark" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="content" optional="NO" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="task" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="ClientTask" inverseName="remarks" inverseEntity="ClientTask"/>
     </entity>
     <entity name="Asset" representedClassName="Asset" syncable="YES" codeGenerationType="class">
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>

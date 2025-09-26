@@ -8,50 +8,25 @@ struct AssetCardView: View {
     let onEdit: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(asset.name ?? "")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    HStack {
-                        Text(asset.type ?? "")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("$\(asset.amount?.doubleValue ?? 0, specifier: "%.2f")")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.green)
-                    }
-                    
-                    if let description = asset.assetDescription, !description.isEmpty {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                    }
+        BaseCardView(
+            isEditMode: isEditMode,
+            onDelete: onDelete,
+            onEdit: onEdit
+        ) {
+            VStack(alignment: .leading, spacing: 4) {
+                CardTitle(title: asset.name ?? "")
+                
+                HStack {
+                    Text(asset.type ?? "")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    CardAmount(amount: asset.amount?.doubleValue ?? 0, color: .green)
                 }
                 
-                if isEditMode {
-                    HStack(spacing: 8) {
-                        Button(action: onEdit) {
-                            Image(systemName: "pencil")
-                                .foregroundColor(.blue)
-                        }
-                        Button(action: onDelete) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                        }
-                    }
-                }
+                CardDescription(description: asset.assetDescription)
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 
@@ -63,56 +38,31 @@ struct ExpenseCardView: View {
     let onEdit: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(expense.name ?? "")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    HStack {
-                        Text(expense.type ?? "")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text("•")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(expense.frequency ?? "")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("$\(expense.amount?.doubleValue ?? 0, specifier: "%.2f")")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.red)
-                    }
-                    
-                    if let description = expense.assetDescription, !description.isEmpty {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                    }
+        BaseCardView(
+            isEditMode: isEditMode,
+            onDelete: onDelete,
+            onEdit: onEdit
+        ) {
+            VStack(alignment: .leading, spacing: 4) {
+                CardTitle(title: expense.name ?? "")
+                
+                HStack {
+                    Text(expense.type ?? "")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("•")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(expense.frequency ?? "")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    CardAmount(amount: expense.amount?.doubleValue ?? 0, color: .red)
                 }
                 
-                if isEditMode {
-                    HStack(spacing: 8) {
-                        Button(action: onEdit) {
-                            Image(systemName: "pencil")
-                                .foregroundColor(.blue)
-                        }
-                        Button(action: onDelete) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                        }
-                    }
-                }
+                CardDescription(description: expense.assetDescription)
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 
@@ -124,72 +74,43 @@ struct ProductCardView: View {
     let onEdit: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(product.name ?? "")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    HStack {
-                        Text(product.category ?? "")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(product.status ?? "")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(statusColor)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(statusColor.opacity(0.2))
-                            .cornerRadius(4)
-                    }
-                    
-                    HStack {
-                        Text("Amount: $\(product.amount?.doubleValue ?? 0, specifier: "%.2f")")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("Premium: $\(product.premium?.doubleValue ?? 0, specifier: "%.2f")")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.blue)
-                    }
-                    
-                    if let coverage = product.coverage, !coverage.isEmpty {
-                        Text("Coverage: \(coverage)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    if let description = product.assetDescription, !description.isEmpty {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                    }
+        BaseCardView(
+            isEditMode: isEditMode,
+            onDelete: onDelete,
+            onEdit: onEdit
+        ) {
+            VStack(alignment: .leading, spacing: 4) {
+                CardTitle(title: product.name ?? "")
+                
+                HStack {
+                    Text(product.category ?? "")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    CardStatusBadge(status: product.status ?? "", color: statusColor)
                 }
                 
-                if isEditMode {
-                    HStack(spacing: 8) {
-                        Button(action: onEdit) {
-                            Image(systemName: "pencil")
-                                .foregroundColor(.blue)
-                        }
-                        Button(action: onDelete) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                        }
-                    }
+                HStack {
+                    Text("Amount: $\(product.amount?.doubleValue ?? 0, specifier: "%.2f")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("Premium: $\(product.premium?.doubleValue ?? 0, specifier: "%.2f")")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
                 }
+                
+                if let coverage = product.coverage, !coverage.isEmpty {
+                    Text("Coverage: \(coverage)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                CardDescription(description: product.assetDescription)
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
     private var statusColor: Color {

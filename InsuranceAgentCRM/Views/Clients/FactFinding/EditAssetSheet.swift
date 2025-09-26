@@ -5,7 +5,6 @@ import CoreData
 struct EditAssetSheet: View {
     let asset: Asset
     let onSave: () -> Void
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var name: String = ""
@@ -13,58 +12,59 @@ struct EditAssetSheet: View {
     @State private var amount: String = ""
     @State private var description: String = ""
     
-    private let assetTypes = [
-        "Cash", "Savings Account", "Investment", "Property", "Vehicle", 
-        "Jewelry", "Art", "Collectibles", "Business", "Other"
-    ]
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section("Asset Details") {
-                    TextField("Asset Name", text: $name)
-                    
-                    Picker("Asset Type", selection: $type) {
-                        ForEach(assetTypes, id: \.self) { assetType in
-                            Text(assetType).tag(assetType)
-                        }
-                    }
-                    
-                    TextField("Amount", text: $amount)
-                        .keyboardType(.decimalPad)
-                    
-                    TextField("Description (Optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+        BaseEditSheet(
+            title: "Edit Asset",
+            onSave: {
+                saveAsset()
             }
-            .navigationTitle("Edit Asset")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+        ) {
+            Section("Asset Details") {
+                FormTextField(title: "Asset Name", text: $name)
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveAsset()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(name.isEmpty || type.isEmpty || amount.isEmpty)
-                }
+                FormPicker(
+                    title: "Asset Type",
+                    selection: $type,
+                    options: FormConstants.assetTypes
+                )
+                
+                FormTextField(
+                    title: "Amount",
+                    text: $amount,
+                    keyboardType: .decimalPad
+                )
+                
+                FormTextEditor(
+                    title: "Description (Optional)",
+                    text: $description
+                )
             }
         }
         .onAppear {
+            // Ensure data is loaded when sheet appears
+            DispatchQueue.main.async {
+                loadAssetData()
+            }
+        }
+        .onChange(of: asset.id) { _, _ in
+            // Reload data if asset changes
             loadAssetData()
         }
     }
     
     private func loadAssetData() {
+        // Ensure we have a valid asset
+        guard asset.managedObjectContext != nil else {
+            print("Warning: Asset context is nil")
+            return
+        }
+        
         name = asset.name ?? ""
         type = asset.type ?? ""
         amount = String(asset.amount?.doubleValue ?? 0)
         description = asset.assetDescription ?? ""
+        
     }
     
     private func saveAsset() {
@@ -77,7 +77,6 @@ struct EditAssetSheet: View {
         do {
             try viewContext.save()
             onSave()
-            dismiss()
         } catch {
             print("Error saving asset: \(error)")
         }

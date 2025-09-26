@@ -20,12 +20,12 @@ struct ClientDetailView: View {
     
     // MARK: - Header View
     private var headerView: some View {
-        HStack {
+            HStack {
             Text(client.displayName)
                 .font(.title2)
-                .fontWeight(.semibold)
+                    .fontWeight(.semibold)
             
-            Spacer()
+                Spacer()
             
             Button(isEditMode ? "Done" : "Edit") {
                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -62,8 +62,8 @@ struct ClientDetailView: View {
                 
                 // 7. Stage Three: Product Pairing
                 StageThreeSection(client: client, isEditMode: isEditMode)
-            }
-            .padding()
+        }
+        .padding()
         }
     }
 }

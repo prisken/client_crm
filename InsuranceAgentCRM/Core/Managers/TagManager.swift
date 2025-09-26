@@ -2,6 +2,11 @@ import Foundation
 import SwiftUI
 import CoreData
 
+// MARK: - Notification Names
+extension Notification.Name {
+    static let tagDeleted = Notification.Name("tagDeleted")
+}
+
 // MARK: - Tag Manager
 class TagManager: ObservableObject {
     @Published var interestTags: [String] = []
@@ -22,7 +27,6 @@ class TagManager: ObservableObject {
         socialStatusTags = UserDefaults.standard.stringArray(forKey: "socialStatusTags") ?? []
         lifeStageTags = UserDefaults.standard.stringArray(forKey: "lifeStageTags") ?? []
         
-        print("DEBUG: TagManager loaded tags - Interests: \(interestTags), Social: \(socialStatusTags), Life: \(lifeStageTags)")
     }
     
     // MARK: - Save Tags
@@ -31,7 +35,6 @@ class TagManager: ObservableObject {
         UserDefaults.standard.set(socialStatusTags, forKey: "socialStatusTags")
         UserDefaults.standard.set(lifeStageTags, forKey: "lifeStageTags")
         
-        print("DEBUG: TagManager saved tags - Interests: \(interestTags), Social: \(socialStatusTags), Life: \(lifeStageTags)")
     }
     
     // MARK: - Add Tag
@@ -39,23 +42,19 @@ class TagManager: ObservableObject {
         let trimmedTag = tag.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTag.isEmpty else { return }
         
-        print("DEBUG: Adding tag '\(trimmedTag)' to category '\(category.rawValue)'")
         
         switch category {
         case .interest:
             if !interestTags.contains(trimmedTag) {
                 interestTags.append(trimmedTag)
-                print("DEBUG: Added to interests: \(interestTags)")
             }
         case .socialStatus:
             if !socialStatusTags.contains(trimmedTag) {
                 socialStatusTags.append(trimmedTag)
-                print("DEBUG: Added to social status: \(socialStatusTags)")
             }
         case .lifeStage:
             if !lifeStageTags.contains(trimmedTag) {
                 lifeStageTags.append(trimmedTag)
-                print("DEBUG: Added to life stage: \(lifeStageTags)")
             }
         }
         
@@ -75,10 +74,15 @@ class TagManager: ObservableObject {
         }
         
         saveTags()
-        objectWillChange.send()
         
         // Remove this tag from all clients
         removeTagFromAllClients(tag, category: category)
+        
+        // Notify that tags have been updated
+        objectWillChange.send()
+        
+        // Post notification for UI updates
+        NotificationCenter.default.post(name: .tagDeleted, object: (tag: tag, category: category))
     }
     
     // MARK: - Remove Tag from All Clients
@@ -131,11 +135,10 @@ class TagManager: ObservableObject {
         socialStatusTags = []
         lifeStageTags = []
         saveTags()
-        print("DEBUG: Cleared all tags")
     }
     
     func debugPrintTags() {
-        print("DEBUG: Current tags - Interests: \(interestTags), Social: \(socialStatusTags), Life: \(lifeStageTags)")
+        // Debug function for development
     }
 }
 
