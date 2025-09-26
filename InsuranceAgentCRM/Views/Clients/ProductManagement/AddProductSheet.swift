@@ -1,0 +1,70 @@
+import SwiftUI
+import CoreData
+
+// MARK: - Add Product Sheet
+struct AddProductSheet: View {
+    let client: Client
+    let category: String
+    let context: NSManagedObjectContext
+    let onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var amount = ""
+    @State private var premium = ""
+    @State private var coverage = ""
+    @State private var description = ""
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Product Details") {
+                    TextField("Product Name", text: $name)
+                    TextField("Coverage Amount", text: $amount)
+                        .keyboardType(.decimalPad)
+                    TextField("Premium", text: $premium)
+                        .keyboardType(.decimalPad)
+                    TextField("Coverage Details", text: $coverage, axis: .vertical)
+                        .lineLimit(2...4)
+                    TextField("Description (Optional)", text: $description, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+            }
+            .navigationTitle("Add \(category) Product")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        saveProduct()
+                    }
+                    .disabled(name.isEmpty || amount.isEmpty || premium.isEmpty)
+                }
+            }
+        }
+    }
+    
+    private func saveProduct() {
+        let product = ClientProduct(context: context)
+        product.id = UUID()
+        product.name = name
+        product.category = category
+        product.amount = NSDecimalNumber(string: amount)
+        product.premium = NSDecimalNumber(string: premium)
+        product.coverage = coverage.isEmpty ? nil : coverage
+        product.assetDescription = description.isEmpty ? nil : description
+        product.status = "proposed"
+        product.createdAt = Date()
+        product.updatedAt = Date()
+        product.client = client
+        
+        do {
+            try context.save()
+            onSave()
+            dismiss()
+        } catch {
+            print("Error saving product: \(error)")
+        }
+    }
+}
