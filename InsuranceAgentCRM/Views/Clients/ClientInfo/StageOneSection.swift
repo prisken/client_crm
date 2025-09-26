@@ -16,10 +16,14 @@ struct StageOneSection: View {
     @State private var isSocialStatusCollapsed = false
     @State private var isLifeStageCollapsed = false
     
-    // MARK: - Tag Options
-    private let interestOptions = TagOptions.interestOptions
-    private let socialStatusOptions = TagOptions.socialStatusOptions
-    private let lifeStageOptions = TagOptions.lifeStageOptions
+    // MARK: - Dynamic Tag System
+    @StateObject private var tagManager: TagManager
+    
+    init(client: Client, isEditMode: Bool) {
+        self.client = client
+        self.isEditMode = isEditMode
+        self._tagManager = StateObject(wrappedValue: TagManager(context: PersistenceController.shared.container.viewContext))
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -58,12 +62,12 @@ struct StageOneSection: View {
                 title: "Interests",
                 isCollapsed: $isInterestsCollapsed,
                 selectedCount: selectedInterests.count,
-                totalCount: interestOptions.count
+                totalCount: 0 // Dynamic count will be handled by TagManager
             ) {
-                TagSelectionView(
-                    title: "Interests",
-                    options: interestOptions,
-                    selectedTags: $selectedInterests
+                DynamicTagSelectionView(
+                    category: .interest,
+                    selectedTags: $selectedInterests,
+                    tagManager: tagManager
                 )
             }
             
@@ -72,12 +76,12 @@ struct StageOneSection: View {
                 title: "Social Status",
                 isCollapsed: $isSocialStatusCollapsed,
                 selectedCount: selectedSocialStatus.count,
-                totalCount: socialStatusOptions.count
+                totalCount: 0 // Dynamic count will be handled by TagManager
             ) {
-                TagSelectionView(
-                    title: "Social Status",
-                    options: socialStatusOptions,
-                    selectedTags: $selectedSocialStatus
+                DynamicTagSelectionView(
+                    category: .socialStatus,
+                    selectedTags: $selectedSocialStatus,
+                    tagManager: tagManager
                 )
             }
             
@@ -86,12 +90,12 @@ struct StageOneSection: View {
                 title: "Life Stage",
                 isCollapsed: $isLifeStageCollapsed,
                 selectedCount: selectedLifeStage.count,
-                totalCount: lifeStageOptions.count
+                totalCount: 0 // Dynamic count will be handled by TagManager
             ) {
-                TagSelectionView(
-                    title: "Life Stage",
-                    options: lifeStageOptions,
-                    selectedTags: $selectedLifeStage
+                DynamicTagSelectionView(
+                    category: .lifeStage,
+                    selectedTags: $selectedLifeStage,
+                    tagManager: tagManager
                 )
             }
         }
@@ -106,7 +110,11 @@ struct StageOneSection: View {
                     isCollapsed: $isInterestsCollapsed,
                     tagCount: interests.count
                 ) {
-                    TagDisplayView(title: "Interests", tags: interests)
+                    DynamicTagDisplayView(
+                        category: .interest,
+                        selectedTags: Set(interests),
+                        tagManager: tagManager
+                    )
                 }
             }
             
@@ -116,7 +124,11 @@ struct StageOneSection: View {
                     isCollapsed: $isSocialStatusCollapsed,
                     tagCount: socialStatus.count
                 ) {
-                    TagDisplayView(title: "Social Status", tags: socialStatus)
+                    DynamicTagDisplayView(
+                        category: .socialStatus,
+                        selectedTags: Set(socialStatus),
+                        tagManager: tagManager
+                    )
                 }
             }
             
@@ -126,7 +138,11 @@ struct StageOneSection: View {
                     isCollapsed: $isLifeStageCollapsed,
                     tagCount: lifeStage.count
                 ) {
-                    TagDisplayView(title: "Life Stage", tags: lifeStage)
+                    DynamicTagDisplayView(
+                        category: .lifeStage,
+                        selectedTags: Set(lifeStage),
+                        tagManager: tagManager
+                    )
                 }
             }
             

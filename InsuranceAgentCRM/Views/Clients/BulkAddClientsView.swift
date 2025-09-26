@@ -89,7 +89,9 @@ struct BulkAddClientsView: View {
         clientEntries.append(BulkClientEntry(
             firstName: "",
             lastName: "",
-            phone: ""
+            phone: "",
+            sex: "",
+            age: 0
         ))
     }
     
@@ -130,6 +132,8 @@ struct BulkAddClientsView: View {
         client.lastName = entry.lastName
         client.phone = entry.phone
         client.dob = Date()
+        client.sex = entry.sex.isEmpty ? nil : entry.sex
+        client.age = entry.age
         client.whatsappOptIn = false
         client.createdAt = Date()
         client.updatedAt = Date()
@@ -222,6 +226,42 @@ struct ClientEntryRow: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .keyboardType(.phonePad)
                     .autocorrectionDisabled()
+            }
+            
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Sex")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("Sex", selection: $entry.sex) {
+                        Text("Select").tag("")
+                        Text("Male").tag("Male")
+                        Text("Female").tag("Female")
+                        Text("Other").tag("Other")
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Age")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    TextField("Age", value: $entry.age, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.numberPad)
+                        .onChange(of: entry.age) { _, newValue in
+                            if newValue < 0 {
+                                entry.age = 0
+                            } else if newValue > 120 {
+                                entry.age = 120
+                            }
+                        }
+                }
             }
         }
         .padding()
@@ -335,4 +375,6 @@ struct BulkClientEntry {
     var firstName: String
     var lastName: String
     var phone: String
+    var sex: String
+    var age: Int16
 }

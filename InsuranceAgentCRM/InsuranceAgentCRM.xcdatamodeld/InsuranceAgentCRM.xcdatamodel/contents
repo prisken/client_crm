@@ -29,6 +29,8 @@
         <attribute name="socialStatus" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer"/>
         <attribute name="lifeStage" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer"/>
         <attribute name="retirementDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="sex" optional="YES" attributeType="String"/>
+        <attribute name="age" optional="YES" attributeType="Integer 16" usesScalarValueType="YES"/>
         <relationship name="auditLogs" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AuditLog" inverseName="client" inverseEntity="AuditLog"/>
         <relationship name="documents" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Document" inverseName="client" inverseEntity="Document"/>
         <relationship name="owner" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="clients" inverseEntity="User"/>

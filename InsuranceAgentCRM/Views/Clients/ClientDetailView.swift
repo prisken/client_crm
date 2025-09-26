@@ -57,8 +57,8 @@ struct ClientDetailView: View {
                 // 5. Stage Two: Fact Finding
                 StageTwoSection(client: client, isEditMode: isEditMode)
                 
-                // 6. Retirement Date Section
-                RetirementDateSection(client: client, isEditMode: isEditMode)
+                       // 6. Age Section
+                       AgeSection(client: client, isEditMode: isEditMode)
                 
                 // 7. Stage Three: Product Pairing
                 StageThreeSection(client: client, isEditMode: isEditMode)

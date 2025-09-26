@@ -18,6 +18,8 @@ struct AddClientView: View {
     @State private var whatsappOptIn = false
     @State private var tags: [String] = []
     @State private var newTag = ""
+    @State private var sex = ""
+    @State private var age: Int16 = 0
     
     var body: some View {
         NavigationView {
@@ -36,6 +38,26 @@ struct AddClientView: View {
                         .keyboardType(.phonePad)
                     
                     DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
+                    
+                    HStack {
+                        Picker("Sex", selection: $sex) {
+                            Text("Select").tag("")
+                            Text("Male").tag("Male")
+                            Text("Female").tag("Female")
+                            Text("Other").tag("Other")
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        
+                        TextField("Age", value: $age, format: .number)
+                            .keyboardType(.numberPad)
+                            .onChange(of: age) { _, newValue in
+                                if newValue < 0 {
+                                    age = 0
+                                } else if newValue > 120 {
+                                    age = 120
+                                }
+                            }
+                    }
                 }
                 
                 Section("Additional Information") {
@@ -106,6 +128,8 @@ struct AddClientView: View {
         client.whatsappOptIn = whatsappOptIn
         client.whatsappOptInDate = whatsappOptIn ? Date() : nil
         client.tags = tags.isEmpty ? nil : tags
+        client.sex = sex.isEmpty ? nil : sex
+        client.age = age
         client.createdAt = Date()
         client.updatedAt = Date()
         // Ensure we have a user for the client

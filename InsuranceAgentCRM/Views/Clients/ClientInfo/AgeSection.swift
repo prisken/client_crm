@@ -1,35 +1,48 @@
 import SwiftUI
 import CoreData
 
-// MARK: - Retirement Date Section
-struct RetirementDateSection: View {
+// MARK: - Age Section
+struct AgeSection: View {
     let client: Client
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
-    @State private var retirementDate = Date()
+    @State private var age: Int16 = 0
     @State private var refreshTrigger = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Retirement Planning")
+            Text("Retirement Age")
                 .font(.headline)
                 .fontWeight(.semibold)
             
             if isEditMode {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Desired Retirement Date")
+                    Text("Retirement Age")
                         .font(.subheadline)
-                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
                     
-                    DatePicker("Retirement Date", selection: $retirementDate, displayedComponents: .date)
-                        .datePickerStyle(.compact)
+                    TextField("Enter retirement age", value: $age, format: .number)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.numberPad)
+                        .onChange(of: age) { _, newValue in
+                            // Ensure age is within reasonable bounds
+                            if newValue < 0 {
+                                age = 0
+                            } else if newValue > 120 {
+                                age = 120
+                            }
+                        }
+                    
+                    Text("Retirement age must be between 0 and 120")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             } else {
                 HStack {
-                    Text("Retirement Date:")
+                    Text("Retirement Age:")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    Text(client.retirementDate?.formatted(date: .abbreviated, time: .omitted) ?? "Not set")
+                    Text(age > 0 ? "\(age) years old" : "Not specified")
                         .font(.subheadline)
                         .fontWeight(.medium)
                     Spacer()
@@ -41,20 +54,20 @@ struct RetirementDateSection: View {
         .cornerRadius(12)
         .id(refreshTrigger)
         .onAppear {
-            retirementDate = client.retirementDate ?? Date()
+            age = client.age
         }
         .onChange(of: client.id) { _, _ in
-            retirementDate = client.retirementDate ?? Date()
+            age = client.age
         }
         .onChange(of: isEditMode) { _, editing in
             if !editing {
-                saveRetirementDate()
+                saveAge()
             }
         }
     }
     
-    private func saveRetirementDate() {
-        client.retirementDate = retirementDate
+    private func saveAge() {
+        client.age = age
         client.updatedAt = Date()
         
         do {
@@ -65,7 +78,7 @@ struct RetirementDateSection: View {
                 refreshTrigger.toggle()
             }
         } catch {
-            print("Error saving retirement date: \(error)")
+            print("Error saving age: \(error)")
         }
     }
 }
