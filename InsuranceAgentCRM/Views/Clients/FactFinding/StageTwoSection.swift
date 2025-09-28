@@ -111,7 +111,7 @@ struct StageTwoSection: View {
         }
         .sheet(isPresented: $showingEditAsset) {
             if let assetID = selectedAssetID,
-               let asset = viewModel.assets.first(where: { $0.id == assetID }) {
+               let asset = fetchAsset(by: assetID) {
                 EditAssetSheet(asset: asset, onSave: {
                     print("🔧 DEBUG: EditAssetSheet onSave called")
                     viewModel.loadData(client: client, context: viewContext)
@@ -127,12 +127,17 @@ struct StageTwoSection: View {
                 .padding()
                 .onAppear {
                     print("❌ DEBUG: Asset not found in sheet presentation - ID: \(selectedAssetID?.uuidString ?? "nil")")
+                    print("❌ DEBUG: Available assets in viewModel:")
+                    for asset in viewModel.assets {
+                        print("❌ DEBUG:   Asset: \(asset.name ?? "nil"), ID: \(asset.id?.uuidString ?? "nil")")
+                    }
+                    print("❌ DEBUG: Total assets count: \(viewModel.assets.count)")
                 }
             }
         }
         .sheet(isPresented: $showingEditExpense) {
             if let expenseID = selectedExpenseID,
-               let expense = viewModel.expenses.first(where: { $0.id == expenseID }) {
+               let expense = fetchExpense(by: expenseID) {
                 EditExpenseSheet(expense: expense, onSave: {
                     print("🔧 DEBUG: EditExpenseSheet onSave called")
                     viewModel.loadData(client: client, context: viewContext)
@@ -148,6 +153,11 @@ struct StageTwoSection: View {
                 .padding()
                 .onAppear {
                     print("❌ DEBUG: Expense not found in sheet presentation - ID: \(selectedExpenseID?.uuidString ?? "nil")")
+                    print("❌ DEBUG: Available expenses in viewModel:")
+                    for expense in viewModel.expenses {
+                        print("❌ DEBUG:   Expense: \(expense.name ?? "nil"), ID: \(expense.id?.uuidString ?? "nil")")
+                    }
+                    print("❌ DEBUG: Total expenses count: \(viewModel.expenses.count)")
                 }
             }
         }
@@ -170,6 +180,34 @@ struct StageTwoSection: View {
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting expense: \(error)")
+        }
+    }
+    
+    private func fetchAsset(by id: UUID) -> Asset? {
+        let request: NSFetchRequest<Asset> = Asset.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        
+        do {
+            let assets = try viewContext.fetch(request)
+            return assets.first
+        } catch {
+            print("Error fetching asset: \(error)")
+            return nil
+        }
+    }
+    
+    private func fetchExpense(by id: UUID) -> Expense? {
+        let request: NSFetchRequest<Expense> = Expense.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        
+        do {
+            let expenses = try viewContext.fetch(request)
+            return expenses.first
+        } catch {
+            print("Error fetching expense: \(error)")
+            return nil
         }
     }
 }

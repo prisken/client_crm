@@ -82,7 +82,7 @@ struct StageThreeSection: View {
         }
         .sheet(isPresented: $showingEditProduct) {
             if let productID = selectedProductID,
-               let product = viewModel.products.first(where: { $0.id == productID }) {
+               let product = fetchProduct(by: productID) {
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                     showingEditProduct = false
@@ -134,6 +134,20 @@ struct StageThreeSection: View {
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting product: \(error)")
+        }
+    }
+    
+    private func fetchProduct(by id: UUID) -> ClientProduct? {
+        let request: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        
+        do {
+            let products = try viewContext.fetch(request)
+            return products.first
+        } catch {
+            print("Error fetching product: \(error)")
+            return nil
         }
     }
 }
