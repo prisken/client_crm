@@ -7,8 +7,8 @@ struct StageTwoSection: View {
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = FactFindingViewModel()
-    @State private var selectedAsset: Asset?
-    @State private var selectedExpense: Expense?
+    @State private var selectedAssetID: UUID?
+    @State private var selectedExpenseID: UUID?
     @State private var showingEditAsset = false
     @State private var showingEditExpense = false
     
@@ -45,8 +45,8 @@ struct StageTwoSection: View {
                         }, onEdit: {
                             print("🔧 DEBUG: Asset edit button clicked - Asset: \(asset.name ?? "nil"), ID: \(asset.id?.uuidString ?? "nil")")
                             print("🔧 DEBUG: Asset context: \(asset.managedObjectContext != nil ? "valid" : "nil")")
-                            selectedAsset = asset
-                            print("🔧 DEBUG: selectedAsset set, showingEditAsset = true")
+                            selectedAssetID = asset.id
+                            print("🔧 DEBUG: selectedAssetID set to \(asset.id?.uuidString ?? "nil"), showingEditAsset = true")
                             showingEditAsset = true
                         })
                     }
@@ -82,8 +82,8 @@ struct StageTwoSection: View {
                         }, onEdit: {
                             print("🔧 DEBUG: Expense edit button clicked - Expense: \(expense.name ?? "nil"), ID: \(expense.id?.uuidString ?? "nil")")
                             print("🔧 DEBUG: Expense context: \(expense.managedObjectContext != nil ? "valid" : "nil")")
-                            selectedExpense = expense
-                            print("🔧 DEBUG: selectedExpense set, showingEditExpense = true")
+                            selectedExpenseID = expense.id
+                            print("🔧 DEBUG: selectedExpenseID set to \(expense.id?.uuidString ?? "nil"), showingEditExpense = true")
                             showingEditExpense = true
                         })
                     }
@@ -110,13 +110,14 @@ struct StageTwoSection: View {
             })
         }
         .sheet(isPresented: $showingEditAsset) {
-            if let asset = selectedAsset {
+            if let assetID = selectedAssetID,
+               let asset = viewModel.assets.first(where: { $0.id == assetID }) {
                 EditAssetSheet(asset: asset, onSave: {
                     print("🔧 DEBUG: EditAssetSheet onSave called")
                     viewModel.loadData(client: client, context: viewContext)
                 })
             } else {
-                // Fallback view if asset is nil
+                // Fallback view if asset is not found
                 VStack {
                     Text("Asset not found")
                         .font(.title2)
@@ -125,18 +126,19 @@ struct StageTwoSection: View {
                 }
                 .padding()
                 .onAppear {
-                    print("❌ DEBUG: Asset is nil in sheet presentation")
+                    print("❌ DEBUG: Asset not found in sheet presentation - ID: \(selectedAssetID?.uuidString ?? "nil")")
                 }
             }
         }
         .sheet(isPresented: $showingEditExpense) {
-            if let expense = selectedExpense {
+            if let expenseID = selectedExpenseID,
+               let expense = viewModel.expenses.first(where: { $0.id == expenseID }) {
                 EditExpenseSheet(expense: expense, onSave: {
                     print("🔧 DEBUG: EditExpenseSheet onSave called")
                     viewModel.loadData(client: client, context: viewContext)
                 })
             } else {
-                // Fallback view if expense is nil
+                // Fallback view if expense is not found
                 VStack {
                     Text("Expense not found")
                         .font(.title2)
@@ -145,7 +147,7 @@ struct StageTwoSection: View {
                 }
                 .padding()
                 .onAppear {
-                    print("❌ DEBUG: Expense is nil in sheet presentation")
+                    print("❌ DEBUG: Expense not found in sheet presentation - ID: \(selectedExpenseID?.uuidString ?? "nil")")
                 }
             }
         }
