@@ -64,12 +64,10 @@ struct MainTabView: View {
                     }
             }
             
-            // Sync Status Bar
-            if !firebaseManager.isConnected {
-                SyncStatusView()
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
-            }
+            // Sync Status Bar - Always show for debugging
+            SyncStatusView()
+                .padding(.horizontal)
+                .padding(.bottom, 8)
         }
     }
 }

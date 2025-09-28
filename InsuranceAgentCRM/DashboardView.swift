@@ -4,7 +4,9 @@ import CoreData
 struct DashboardView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = DashboardViewModel()
+    @State private var isSyncing = false
     
     var body: some View {
         NavigationView {
@@ -20,6 +22,51 @@ struct DashboardView: View {
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    
+                    // Firebase Sync Controls
+                    VStack(spacing: 12) {
+                        HStack {
+                            Text("Firebase Sync")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            Spacer()
+                            if isSyncing {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                        }
+                        
+                        HStack(spacing: 12) {
+                            Button("Sync All Data to Firebase") {
+                                syncAllData()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(isSyncing)
+                            
+                            Button("Fetch Data from Firebase") {
+                                fetchAllData()
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(isSyncing)
+                        }
+                        
+                        if let syncError = firebaseManager.syncError {
+                            Text("Sync Error: \(syncError)")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                        }
+                        
+                        if let lastSync = firebaseManager.lastSyncDate {
+                            Text("Last synced: \(lastSync, formatter: dateFormatter)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
                     .padding(.horizontal)
                     
                     // Stats Cards
@@ -123,6 +170,69 @@ struct DashboardView: View {
             viewModel.loadData(context: viewContext)
         }
     }
+    
+    // MARK: - Firebase Sync Functions
+    private func syncAllData() {
+        isSyncing = true
+        
+        // Fetch all clients and sync them
+        let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+        do {
+            let clients = try viewContext.fetch(clientRequest)
+            for client in clients {
+                firebaseManager.syncClient(client)
+            }
+            
+            // Fetch all assets and sync them
+            let assetRequest: NSFetchRequest<Asset> = Asset.fetchRequest()
+            let assets = try viewContext.fetch(assetRequest)
+            for asset in assets {
+                firebaseManager.syncAsset(asset)
+            }
+            
+            // Fetch all expenses and sync them
+            let expenseRequest: NSFetchRequest<Expense> = Expense.fetchRequest()
+            let expenses = try viewContext.fetch(expenseRequest)
+            for expense in expenses {
+                firebaseManager.syncExpense(expense)
+            }
+            
+            // Fetch all products and sync them
+            let productRequest: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
+            let products = try viewContext.fetch(productRequest)
+            for product in products {
+                firebaseManager.syncProduct(product)
+            }
+            
+            print("✅ All data synced to Firebase")
+        } catch {
+            print("❌ Error syncing data: \(error)")
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            isSyncing = false
+        }
+    }
+    
+    private func fetchAllData() {
+        isSyncing = true
+        
+        // Fetch all data from Firebase
+        firebaseManager.fetchAllData(context: viewContext)
+        
+        // Refresh the dashboard data after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            viewModel.loadData(context: viewContext)
+            isSyncing = false
+        }
+    }
+    
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }()
 }
 
 struct StatCard: View {
@@ -327,6 +437,7 @@ class DashboardViewModel: ObservableObject {
             )
         ]
     }
+    
 }
 
 #Preview {
