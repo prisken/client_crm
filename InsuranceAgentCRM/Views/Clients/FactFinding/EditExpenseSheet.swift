@@ -48,6 +48,9 @@ struct EditExpenseSheet: View {
             }
         }
         .onAppear {
+            print("🔧 DEBUG: EditExpenseSheet onAppear called")
+            print("🔧 DEBUG: Expense in sheet - Name: \(expense.name ?? "nil"), ID: \(expense.id?.uuidString ?? "nil")")
+            print("🔧 DEBUG: Expense context: \(expense.managedObjectContext != nil ? "valid" : "nil")")
             // Load data immediately when sheet appears
             loadExpenseData()
         }
@@ -58,14 +61,21 @@ struct EditExpenseSheet: View {
     }
     
     private func loadExpenseData() {
+        print("🔧 DEBUG: loadExpenseData called")
+        print("🔧 DEBUG: Expense before refresh - Name: \(expense.name ?? "nil"), Context: \(expense.managedObjectContext != nil ? "valid" : "nil")")
+        
         // Refresh the expense from context to ensure it's valid
         viewContext.refresh(expense, mergeChanges: true)
+        
+        print("🔧 DEBUG: Expense after refresh - Name: \(expense.name ?? "nil"), Context: \(expense.managedObjectContext != nil ? "valid" : "nil")")
         
         name = expense.name ?? ""
         type = expense.type ?? "Fixed"
         amount = String(expense.amount?.doubleValue ?? 0)
         frequency = expense.frequency ?? "monthly"
         description = expense.assetDescription ?? ""
+        
+        print("🔧 DEBUG: Expense data loaded - name: \(name), type: \(type), amount: \(amount), frequency: \(frequency)")
     }
     
     private func saveExpense() {

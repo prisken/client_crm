@@ -43,7 +43,10 @@ struct StageTwoSection: View {
                         AssetCardView(asset: asset, isEditMode: isEditMode, onDelete: {
                             deleteAsset(asset)
                         }, onEdit: {
+                            print("🔧 DEBUG: Asset edit button clicked - Asset: \(asset.name ?? "nil"), ID: \(asset.id?.uuidString ?? "nil")")
+                            print("🔧 DEBUG: Asset context: \(asset.managedObjectContext != nil ? "valid" : "nil")")
                             selectedAsset = asset
+                            print("🔧 DEBUG: selectedAsset set, showingEditAsset = true")
                             showingEditAsset = true
                         })
                     }
@@ -77,7 +80,10 @@ struct StageTwoSection: View {
                         ExpenseCardView(expense: expense, isEditMode: isEditMode, onDelete: {
                             deleteExpense(expense)
                         }, onEdit: {
+                            print("🔧 DEBUG: Expense edit button clicked - Expense: \(expense.name ?? "nil"), ID: \(expense.id?.uuidString ?? "nil")")
+                            print("🔧 DEBUG: Expense context: \(expense.managedObjectContext != nil ? "valid" : "nil")")
                             selectedExpense = expense
+                            print("🔧 DEBUG: selectedExpense set, showingEditExpense = true")
                             showingEditExpense = true
                         })
                     }
@@ -106,6 +112,7 @@ struct StageTwoSection: View {
         .sheet(isPresented: $showingEditAsset) {
             if let asset = selectedAsset {
                 EditAssetSheet(asset: asset, onSave: {
+                    print("🔧 DEBUG: EditAssetSheet onSave called")
                     viewModel.loadData(client: client, context: viewContext)
                 })
             } else {
@@ -117,11 +124,15 @@ struct StageTwoSection: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
+                .onAppear {
+                    print("❌ DEBUG: Asset is nil in sheet presentation")
+                }
             }
         }
         .sheet(isPresented: $showingEditExpense) {
             if let expense = selectedExpense {
                 EditExpenseSheet(expense: expense, onSave: {
+                    print("🔧 DEBUG: EditExpenseSheet onSave called")
                     viewModel.loadData(client: client, context: viewContext)
                 })
             } else {
@@ -133,6 +144,9 @@ struct StageTwoSection: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
+                .onAppear {
+                    print("❌ DEBUG: Expense is nil in sheet presentation")
+                }
             }
         }
     }

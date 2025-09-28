@@ -42,6 +42,9 @@ struct EditAssetSheet: View {
             }
         }
         .onAppear {
+            print("🔧 DEBUG: EditAssetSheet onAppear called")
+            print("🔧 DEBUG: Asset in sheet - Name: \(asset.name ?? "nil"), ID: \(asset.id?.uuidString ?? "nil")")
+            print("🔧 DEBUG: Asset context: \(asset.managedObjectContext != nil ? "valid" : "nil")")
             // Load data immediately when sheet appears
             loadAssetData()
         }
@@ -52,13 +55,20 @@ struct EditAssetSheet: View {
     }
     
     private func loadAssetData() {
+        print("🔧 DEBUG: loadAssetData called")
+        print("🔧 DEBUG: Asset before refresh - Name: \(asset.name ?? "nil"), Context: \(asset.managedObjectContext != nil ? "valid" : "nil")")
+        
         // Refresh the asset from context to ensure it's valid
         viewContext.refresh(asset, mergeChanges: true)
+        
+        print("🔧 DEBUG: Asset after refresh - Name: \(asset.name ?? "nil"), Context: \(asset.managedObjectContext != nil ? "valid" : "nil")")
         
         name = asset.name ?? ""
         type = asset.type ?? "Investment"
         amount = String(asset.amount?.doubleValue ?? 0)
         description = asset.assetDescription ?? ""
+        
+        print("🔧 DEBUG: Asset data loaded - name: \(name), type: \(type), amount: \(amount)")
     }
     
     private func saveAsset() {
