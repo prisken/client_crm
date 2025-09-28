@@ -218,9 +218,7 @@ struct DashboardView: View {
                 firebaseManager.syncTask(task)
             }
             
-            print("✅ All data synced to Firebase")
         } catch {
-            print("❌ Error syncing data: \(error)")
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -393,7 +391,6 @@ class DashboardViewModel: ObservableObject {
         do {
             totalClients = try context.count(for: request)
         } catch {
-            print("Error loading client count: \(error)")
         }
     }
     
@@ -403,7 +400,6 @@ class DashboardViewModel: ObservableObject {
         do {
             activeTasks = try context.count(for: request)
         } catch {
-            print("Error loading task count: \(error)")
         }
     }
     
@@ -423,7 +419,6 @@ class DashboardViewModel: ObservableObject {
         do {
             todayTasks = try context.fetch(request)
         } catch {
-            print("Error loading today's tasks: \(error)")
         }
     }
     

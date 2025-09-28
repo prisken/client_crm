@@ -180,7 +180,6 @@ struct AddClientView: View {
                 dismiss()
             }
         } catch {
-            print("❌ Error saving client: \(error)")
         }
     }
 }

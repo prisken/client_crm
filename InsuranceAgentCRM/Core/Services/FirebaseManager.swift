@@ -2,8 +2,6 @@ import Foundation
 import FirebaseCore
 import FirebaseFirestore
 import FirebaseAuth
-import SwiftUI
-import Combine
 import CoreData
 
 @MainActor
@@ -16,7 +14,6 @@ class FirebaseManager: ObservableObject {
     @Published var syncError: String?
     
     private let db = Firestore.firestore()
-    private var cancellables = Set<AnyCancellable>()
     
     private init() {
         checkConnection()
@@ -98,10 +95,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("clients").document(clientId).setData(clientData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing client: \(error)")
                     self?.syncError = "Failed to sync client: \(error.localizedDescription)"
                 } else {
-                    print("✅ Client synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -131,10 +126,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("assets").document(assetId).setData(assetData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing asset: \(error)")
                     self?.syncError = "Failed to sync asset: \(error.localizedDescription)"
                 } else {
-                    print("✅ Asset synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -165,10 +158,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("expenses").document(expenseId).setData(expenseData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing expense: \(error)")
                     self?.syncError = "Failed to sync expense: \(error.localizedDescription)"
                 } else {
-                    print("✅ Expense synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -201,10 +192,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("products").document(productId).setData(productData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing product: \(error)")
                     self?.syncError = "Failed to sync product: \(error.localizedDescription)"
                 } else {
-                    print("✅ Product synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -238,10 +227,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("standalone_products").document(productId).setData(productData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing standalone product: \(error)")
                     self?.syncError = "Failed to sync standalone product: \(error.localizedDescription)"
                 } else {
-                    print("✅ Standalone product synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -276,10 +263,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("standalone_tasks").document(taskId).setData(taskData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing standalone task: \(error)")
                     self?.syncError = "Failed to sync standalone task: \(error.localizedDescription)"
                 } else {
-                    print("✅ Standalone task synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -308,10 +293,8 @@ class FirebaseManager: ObservableObject {
         db.collection("users").document(currentUserId).collection("tasks").document(taskId).setData(taskData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error syncing task: \(error)")
                     self?.syncError = "Failed to sync task: \(error.localizedDescription)"
                 } else {
-                    print("✅ Task synced successfully")
                     self?.lastSyncDate = Date()
                 }
             }
@@ -348,7 +331,6 @@ class FirebaseManager: ObservableObject {
                 return
             }
             
-            print("📥 Fetching \(documents.count) clients from Firebase")
             for document in documents {
                 let data = document.data()
                 self?.createOrUpdateClient(from: data, context: context)
@@ -368,7 +350,6 @@ class FirebaseManager: ObservableObject {
         
         db.collection("users").document(currentUserId).collection("assets").getDocuments { [weak self] snapshot, error in
             if let error = error {
-                print("❌ Error fetching assets: \(error)")
                 return
             }
             
@@ -393,7 +374,6 @@ class FirebaseManager: ObservableObject {
         
         db.collection("users").document(currentUserId).collection("expenses").getDocuments { [weak self] snapshot, error in
             if let error = error {
-                print("❌ Error fetching expenses: \(error)")
                 return
             }
             
@@ -420,7 +400,6 @@ class FirebaseManager: ObservableObject {
             DispatchQueue.main.async {
                 self?.isSyncing = false
                 if let error = error {
-                    print("❌ Error fetching products: \(error)")
                     return
                 }
                 
@@ -510,7 +489,6 @@ class FirebaseManager: ObservableObject {
         }
         
         try? context.save()
-        print("✅ Client \(client.firstName ?? "") \(client.lastName ?? "") synced from Firebase with owner: \(client.owner?.email ?? "None")")
     }
     
     private func createOrUpdateAsset(from data: [String: Any], context: NSManagedObjectContext) {

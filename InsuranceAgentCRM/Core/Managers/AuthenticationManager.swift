@@ -35,12 +35,10 @@ class AuthenticationManager: ObservableObject {
     }
     
     func checkAuthenticationStatus() {
-        logInfo("Checking authentication status")
         
         // Check Firebase Auth status first
         if let firebaseUser = Auth.auth().currentUser {
             self.firebaseUser = firebaseUser
-            logInfo("Firebase user authenticated: \(firebaseUser.email ?? "N/A")")
             
             // Load or create local Core Data user
             loadOrCreateLocalUser(firebaseUser: firebaseUser)
@@ -60,16 +58,13 @@ class AuthenticationManager: ObservableObject {
             if keychain.getToken() != nil {
                 isAuthenticated = true
                 loadCurrentUser()
-                logInfo("Local authentication token found")
             } else {
                 isAuthenticated = false
-                logInfo("No authentication found")
             }
         }
     }
     
     func login(email: String, password: String, context: NSManagedObjectContext) async throws {
-        logInfo("Attempting Firebase login for email: \(email)")
         isLoading = true
         errorMessage = nil
         
@@ -87,7 +82,6 @@ class AuthenticationManager: ObservableObject {
             if let existingUser = users.first {
                 // User exists in Core Data, use it
                 user = existingUser
-                logInfo("Found existing user in Core Data: \(email)")
             } else {
                 // User doesn't exist in Core Data, create it
                 user = CoreDataUser(context: context)
@@ -99,7 +93,6 @@ class AuthenticationManager: ObservableObject {
                 user.passwordHash = "" // No need to store password with Firebase
                 
                 try context.save()
-                logInfo("Created new user in Core Data: \(email)")
             }
             
             // Save Firebase token
@@ -112,10 +105,8 @@ class AuthenticationManager: ObservableObject {
                 self.userRole = UserRole(rawValue: user.role ?? "agent") ?? .agent
             }
             
-            logInfo("Firebase login successful: \(user.email ?? "")")
             
         } catch {
-            logError("Firebase login failed: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             throw error
         }
@@ -124,13 +115,11 @@ class AuthenticationManager: ObservableObject {
     }
     
     func logout() {
-        logInfo("User logging out")
         
         // Sign out from Firebase
         do {
             try Auth.auth().signOut()
         } catch {
-            logError("Firebase sign out error: \(error)")
         }
         
         keychain.deleteToken()
@@ -138,7 +127,6 @@ class AuthenticationManager: ObservableObject {
         currentUser = nil
         userRole = .agent
         errorMessage = nil
-        logInfo("User logged out successfully")
     }
     
     
@@ -156,7 +144,6 @@ class AuthenticationManager: ObservableObject {
                 self.userRole = UserRole(rawValue: user.role ?? "agent") ?? .agent
             }
         } catch {
-            logError("Failed to load current user: \(error)")
         }
     }
     
@@ -171,7 +158,6 @@ class AuthenticationManager: ObservableObject {
                 // User exists, update if needed
                 self.currentUser = existingUser
                 self.userRole = UserRole(rawValue: existingUser.role ?? "agent") ?? .agent
-                logInfo("Found existing Core Data user: \(existingUser.email ?? "")")
             } else {
                 // Create new user in Core Data
                 let newUser = CoreDataUser(context: context)
@@ -185,15 +171,12 @@ class AuthenticationManager: ObservableObject {
                 try context.save()
                 self.currentUser = newUser
                 self.userRole = .agent
-                logInfo("Created new Core Data user: \(newUser.email ?? "")")
             }
         } catch {
-            logError("Failed to load or create local user: \(error)")
         }
     }
     
     func createUser(email: String, password: String, role: UserRole, context: NSManagedObjectContext) async throws -> User {
-        logInfo("Creating Firebase user with email: \(email)")
         
         do {
             // Create Firebase user
@@ -214,17 +197,14 @@ class AuthenticationManager: ObservableObject {
             let idToken = try await authResult.user.getIDToken()
             keychain.saveToken(idToken)
             
-            logInfo("Firebase user created successfully: \(email)")
             return user
             
         } catch {
-            logError("Firebase user creation failed: \(error.localizedDescription)")
             throw error
         }
     }
     
     private func hashPassword(_ password: String) -> String {
-        logDebug("Hashing password")
         // In production, use proper password hashing (bcrypt, scrypt, etc.)
         return password.data(using: .utf8)?.base64EncodedString() ?? ""
     }
@@ -236,7 +216,6 @@ class KeychainManager {
     private let service = "com.insuranceagent.crm"
     
     func saveToken(_ token: String) {
-        logDebug("Saving token to keychain")
         let data = token.data(using: .utf8)!
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -249,14 +228,11 @@ class KeychainManager {
         let status = SecItemAdd(query as CFDictionary, nil)
         
         if status == noErr {
-            logDebug("Token saved successfully")
         } else {
-            logError("Failed to save token to keychain")
         }
     }
     
     func getToken() -> String? {
-        logDebug("Retrieving token from keychain")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -271,16 +247,13 @@ class KeychainManager {
         guard status == errSecSuccess,
               let data = result as? Data,
               let token = String(data: data, encoding: .utf8) else {
-            logDebug("No token found in keychain")
             return nil
         }
         
-        logDebug("Token retrieved successfully")
         return token
     }
     
     func deleteToken() {
-        logDebug("Deleting token from keychain")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -289,9 +262,7 @@ class KeychainManager {
         
         let status = SecItemDelete(query as CFDictionary)
         if status == noErr {
-            logDebug("Token deleted successfully")
         } else {
-            logError("Failed to delete token from keychain")
         }
     }
 }

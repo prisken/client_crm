@@ -76,7 +76,6 @@ struct EditAssetSheet: View {
             
             onSave()
         } catch {
-            print("Error saving asset: \(error)")
         }
     }
 }

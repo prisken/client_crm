@@ -84,7 +84,6 @@ struct EditExpenseSheet: View {
             
             onSave()
         } catch {
-            print("Error saving expense: \(error)")
         }
     }
 }

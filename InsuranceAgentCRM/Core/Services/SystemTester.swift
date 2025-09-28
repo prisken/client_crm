@@ -2,7 +2,6 @@ import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 import CoreData
-import SwiftUI
 
 @MainActor
 class SystemTester: ObservableObject {
