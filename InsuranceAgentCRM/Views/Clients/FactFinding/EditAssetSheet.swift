@@ -42,10 +42,8 @@ struct EditAssetSheet: View {
             }
         }
         .onAppear {
-            // Ensure data is loaded when sheet appears
-            DispatchQueue.main.async {
-                loadAssetData()
-            }
+            // Load data immediately when sheet appears
+            loadAssetData()
         }
         .onChange(of: asset.id) { _, _ in
             // Reload data if asset changes
@@ -54,17 +52,13 @@ struct EditAssetSheet: View {
     }
     
     private func loadAssetData() {
-        // Ensure we have a valid asset
-        guard asset.managedObjectContext != nil else {
-            print("Warning: Asset context is nil")
-            return
-        }
+        // Refresh the asset from context to ensure it's valid
+        viewContext.refresh(asset, mergeChanges: true)
         
         name = asset.name ?? ""
         type = asset.type ?? "Investment"
         amount = String(asset.amount?.doubleValue ?? 0)
         description = asset.assetDescription ?? ""
-        
     }
     
     private func saveAsset() {

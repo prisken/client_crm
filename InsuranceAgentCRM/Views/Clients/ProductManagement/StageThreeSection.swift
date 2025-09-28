@@ -81,14 +81,14 @@ struct StageThreeSection: View {
             )
         }
         .sheet(isPresented: $showingEditProduct) {
-            if let product = selectedProduct, product.managedObjectContext != nil {
+            if let product = selectedProduct {
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                     showingEditProduct = false
                     selectedProduct = nil
                 })
             } else {
-                // Fallback view if product is nil or invalid
+                // Fallback view if product is nil
                 NavigationView {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")

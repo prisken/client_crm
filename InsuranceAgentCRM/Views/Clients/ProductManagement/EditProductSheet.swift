@@ -75,10 +75,8 @@ struct EditProductSheet: View {
             }
         }
         .onAppear {
-            // Ensure data is loaded when sheet appears
-            DispatchQueue.main.async {
-                loadProductData()
-            }
+            // Load data immediately when sheet appears
+            loadProductData()
         }
         .onChange(of: product.id) { _, _ in
             // Reload data if product changes
@@ -87,19 +85,8 @@ struct EditProductSheet: View {
     }
     
     private func loadProductData() {
-        // Ensure we have a valid product
-        guard product.managedObjectContext != nil else {
-            print("Warning: Product context is nil")
-            isDataLoaded = false
-            return
-        }
-        
-        // Validate product has required data
-        guard product.name != nil else {
-            print("Warning: Product name is nil")
-            isDataLoaded = false
-            return
-        }
+        // Refresh the product from context to ensure it's valid
+        viewContext.refresh(product, mergeChanges: true)
         
         // Load data from product
         name = product.name ?? ""

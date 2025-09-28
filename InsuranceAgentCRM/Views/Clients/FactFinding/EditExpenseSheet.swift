@@ -48,10 +48,8 @@ struct EditExpenseSheet: View {
             }
         }
         .onAppear {
-            // Ensure data is loaded when sheet appears
-            DispatchQueue.main.async {
-                loadExpenseData()
-            }
+            // Load data immediately when sheet appears
+            loadExpenseData()
         }
         .onChange(of: expense.id) { _, _ in
             // Reload data if expense changes
@@ -60,18 +58,14 @@ struct EditExpenseSheet: View {
     }
     
     private func loadExpenseData() {
-        // Ensure we have a valid expense
-        guard expense.managedObjectContext != nil else {
-            print("Warning: Expense context is nil")
-            return
-        }
+        // Refresh the expense from context to ensure it's valid
+        viewContext.refresh(expense, mergeChanges: true)
         
         name = expense.name ?? ""
         type = expense.type ?? "Fixed"
         amount = String(expense.amount?.doubleValue ?? 0)
         frequency = expense.frequency ?? "monthly"
         description = expense.assetDescription ?? ""
-        
     }
     
     private func saveExpense() {
