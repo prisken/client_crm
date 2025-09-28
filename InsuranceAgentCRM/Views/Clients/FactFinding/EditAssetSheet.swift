@@ -8,7 +8,7 @@ struct EditAssetSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var name: String = ""
-    @State private var type: String = ""
+    @State private var type: String = "Investment"
     @State private var amount: String = ""
     @State private var description: String = ""
     
@@ -61,7 +61,7 @@ struct EditAssetSheet: View {
         }
         
         name = asset.name ?? ""
-        type = asset.type ?? ""
+        type = asset.type ?? "Investment"
         amount = String(asset.amount?.doubleValue ?? 0)
         description = asset.assetDescription ?? ""
         

@@ -8,9 +8,9 @@ struct EditExpenseSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var name: String = ""
-    @State private var type: String = ""
+    @State private var type: String = "Fixed"
     @State private var amount: String = ""
-    @State private var frequency: String = ""
+    @State private var frequency: String = "monthly"
     @State private var description: String = ""
     
     var body: some View {
@@ -67,9 +67,9 @@ struct EditExpenseSheet: View {
         }
         
         name = expense.name ?? ""
-        type = expense.type ?? ""
+        type = expense.type ?? "Fixed"
         amount = String(expense.amount?.doubleValue ?? 0)
-        frequency = expense.frequency ?? ""
+        frequency = expense.frequency ?? "monthly"
         description = expense.assetDescription ?? ""
         
     }

@@ -8,11 +8,11 @@ struct EditProductSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var name: String = ""
-    @State private var category: String = ""
+    @State private var category: String = "Life"
     @State private var amount: String = ""
     @State private var premium: String = ""
     @State private var coverage: String = ""
-    @State private var status: String = ""
+    @State private var status: String = "Proposed"
     @State private var description: String = ""
     @State private var isDataLoaded: Bool = false
     
@@ -103,11 +103,11 @@ struct EditProductSheet: View {
         
         // Load data from product
         name = product.name ?? ""
-        category = product.category ?? ""
+        category = product.category ?? "Life"
         amount = String(product.amount?.doubleValue ?? 0)
         premium = String(product.premium?.doubleValue ?? 0)
         coverage = product.coverage ?? ""
-        status = product.status ?? ""
+        status = product.status ?? "Proposed"
         description = product.assetDescription ?? ""
         
         // Mark data as loaded
