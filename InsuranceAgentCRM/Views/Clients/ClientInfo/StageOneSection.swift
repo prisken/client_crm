@@ -100,7 +100,7 @@ struct StageOneSection: View {
     // MARK: - View Mode View
     private var viewModeView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let interests = client.interests, !interests.isEmpty {
+            if let interests = client.interests as? [String], !interests.isEmpty {
                 CollapsibleDisplaySection(
                     title: "Interests",
                     isCollapsed: $isInterestsCollapsed,
@@ -114,7 +114,7 @@ struct StageOneSection: View {
                 }
             }
             
-            if let socialStatus = client.socialStatus, !socialStatus.isEmpty {
+            if let socialStatus = client.socialStatus as? [String], !socialStatus.isEmpty {
                 CollapsibleDisplaySection(
                     title: "Social Status",
                     isCollapsed: $isSocialStatusCollapsed,
@@ -128,7 +128,7 @@ struct StageOneSection: View {
                 }
             }
             
-            if let lifeStage = client.lifeStage, !lifeStage.isEmpty {
+            if let lifeStage = client.lifeStage as? [String], !lifeStage.isEmpty {
                 CollapsibleDisplaySection(
                     title: "Life Stage",
                     isCollapsed: $isLifeStageCollapsed,
@@ -152,9 +152,9 @@ struct StageOneSection: View {
     
     // MARK: - Computed Properties
     private var hasAnyTags: Bool {
-        let hasInterests = client.interests?.isEmpty == false
-        let hasSocialStatus = client.socialStatus?.isEmpty == false
-        let hasLifeStage = client.lifeStage?.isEmpty == false
+        let hasInterests = (client.interests as? [String])?.isEmpty == false
+        let hasSocialStatus = (client.socialStatus as? [String])?.isEmpty == false
+        let hasLifeStage = (client.lifeStage as? [String])?.isEmpty == false
         return hasInterests || hasSocialStatus || hasLifeStage
     }
     
@@ -187,19 +187,19 @@ struct StageOneSection: View {
     }
     
     private func loadClientData() {
-        if let interests = client.interests {
+        if let interests = client.interests as? [String] {
             selectedInterests = Set(interests)
         } else {
             selectedInterests = Set()
         }
         
-        if let socialStatus = client.socialStatus {
+        if let socialStatus = client.socialStatus as? [String] {
             selectedSocialStatus = Set(socialStatus)
         } else {
             selectedSocialStatus = Set()
         }
         
-        if let lifeStage = client.lifeStage {
+        if let lifeStage = client.lifeStage as? [String] {
             selectedLifeStage = Set(lifeStage)
         } else {
             selectedLifeStage = Set()
@@ -208,9 +208,9 @@ struct StageOneSection: View {
     
     private func saveClientData() {
         // Update the client object with selected tags
-        client.interests = Array(selectedInterests)
-        client.socialStatus = Array(selectedSocialStatus)
-        client.lifeStage = Array(selectedLifeStage)
+        client.interests = Array(selectedInterests) as NSObject
+        client.socialStatus = Array(selectedSocialStatus) as NSObject
+        client.lifeStage = Array(selectedLifeStage) as NSObject
         client.updatedAt = Date()
         
         do {

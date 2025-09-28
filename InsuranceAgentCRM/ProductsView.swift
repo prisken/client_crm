@@ -265,7 +265,7 @@ struct AddProductView: View {
         product.productType = productType
         product.basePremium = NSDecimalNumber(decimal: basePremium)
         product.productDescription = description.isEmpty ? nil : description
-        product.riders = riders.isEmpty ? nil : riders
+        product.riders = riders.isEmpty ? nil : riders as NSObject
         product.createdAt = Date()
         product.updatedAt = Date()
         
@@ -362,7 +362,7 @@ struct ProductDetailView: View {
                             }
                         }
                         
-                        if let riders = product.riders, !riders.isEmpty {
+                        if let riders = product.riders as? [String], !riders.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Available Riders")
                                     .font(.subheadline)
@@ -476,7 +476,7 @@ struct EditProductView: View {
         _productType = State(initialValue: product.productType ?? "Life")
         _basePremium = State(initialValue: product.basePremium?.decimalValue ?? 0)
         _description = State(initialValue: product.productDescription ?? "")
-        _riders = State(initialValue: product.riders ?? [])
+        _riders = State(initialValue: (product.riders as? [String]) ?? [])
     }
     
     var body: some View {
@@ -555,7 +555,7 @@ struct EditProductView: View {
         product.productType = productType
         product.basePremium = NSDecimalNumber(decimal: basePremium)
         product.productDescription = description.isEmpty ? nil : description
-        product.riders = riders.isEmpty ? nil : riders
+        product.riders = riders.isEmpty ? nil : riders as NSObject
         product.updatedAt = Date()
         
         do {
@@ -717,7 +717,7 @@ struct QuoteBuilderView: View {
         quote.client = selectedClient
         quote.product = product
         quote.coverageAmount = NSDecimalNumber(decimal: coverageAmount)
-        quote.selectedRiders = selectedRiders.isEmpty ? nil : selectedRiders
+        quote.selectedRiders = selectedRiders.isEmpty ? nil : selectedRiders as NSObject
         quote.discount = NSDecimalNumber(decimal: discount)
         quote.finalPremium = NSDecimalNumber(decimal: finalPremium)
         quote.status = "draft"

@@ -85,15 +85,15 @@ extension Client {
     var allTags: [String] {
         var tags: [String] = []
         
-        if let interests = self.interests {
+        if let interests = self.interests as? [String] {
             tags.append(contentsOf: interests)
         }
         
-        if let socialStatus = self.socialStatus {
+        if let socialStatus = self.socialStatus as? [String] {
             tags.append(contentsOf: socialStatus)
         }
         
-        if let lifeStage = self.lifeStage {
+        if let lifeStage = self.lifeStage as? [String] {
             tags.append(contentsOf: lifeStage)
         }
         

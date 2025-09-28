@@ -40,7 +40,7 @@ struct ClientRowView: View {
                             .lineLimit(1)
                     }
                     
-                    if let tags = client.tags, !tags.isEmpty {
+                    if let tags = client.tags as? [String], !tags.isEmpty {
                         ClientTagsView(tags: tags)
                     }
                 }

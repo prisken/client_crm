@@ -127,7 +127,7 @@ struct AddClientView: View {
         client.notes = notes.isEmpty ? nil : notes
         client.whatsappOptIn = whatsappOptIn
         client.whatsappOptInDate = whatsappOptIn ? Date() : nil
-        client.tags = tags.isEmpty ? nil : tags
+        client.tags = tags.isEmpty ? nil : tags as NSObject
         client.sex = sex.isEmpty ? nil : sex
         client.age = age
         client.createdAt = Date()

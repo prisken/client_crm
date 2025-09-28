@@ -97,19 +97,19 @@ class TagManager: ObservableObject {
             for client in clients {
                 switch category {
                 case .interest:
-                    if var interests = client.interests {
+                    if var interests = client.interests as? [String] {
                         interests.removeAll { $0 == tag }
-                        client.interests = interests.isEmpty ? nil : interests
+                        client.interests = interests.isEmpty ? nil : interests as NSObject
                     }
                 case .socialStatus:
-                    if var socialStatus = client.socialStatus {
+                    if var socialStatus = client.socialStatus as? [String] {
                         socialStatus.removeAll { $0 == tag }
-                        client.socialStatus = socialStatus.isEmpty ? nil : socialStatus
+                        client.socialStatus = socialStatus.isEmpty ? nil : socialStatus as NSObject
                     }
                 case .lifeStage:
-                    if var lifeStage = client.lifeStage {
+                    if var lifeStage = client.lifeStage as? [String] {
                         lifeStage.removeAll { $0 == tag }
-                        client.lifeStage = lifeStage.isEmpty ? nil : lifeStage
+                        client.lifeStage = lifeStage.isEmpty ? nil : lifeStage as NSObject
                     }
                 }
             }
