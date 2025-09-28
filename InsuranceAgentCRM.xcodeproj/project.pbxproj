@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B9DB22A22E89C8C400A4D63A /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B9DB22A12E89C8C400A4D63A /* FirebaseAuth */; };
+		B9DB22A42E89C8C400A4D63A /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = B9DB22A32E89C8C400A4D63A /* FirebaseCore */; };
+		B9DB22A62E89C8C400A4D63A /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = B9DB22A52E89C8C400A4D63A /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		B995123E2E83E90D005A06F5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +58,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9DB22A42E89C8C400A4D63A /* FirebaseCore in Frameworks */,
+				B9DB22A22E89C8C400A4D63A /* FirebaseAuth in Frameworks */,
+				B9DB22A62E89C8C400A4D63A /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +121,9 @@
 			);
 			name = InsuranceAgentCRM;
 			packageProductDependencies = (
+				B9DB22A12E89C8C400A4D63A /* FirebaseAuth */,
+				B9DB22A32E89C8C400A4D63A /* FirebaseCore */,
+				B9DB22A52E89C8C400A4D63A /* FirebaseFirestore */,
 			);
 			productName = InsuranceAgentCRM;
 			productReference = B99512302E83E90C005A06F5 /* InsuranceAgentCRM.app */;
@@ -195,6 +207,9 @@
 			);
 			mainGroup = B99512272E83E90C005A06F5;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B9DB22A02E89C8C400A4D63A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B99512312E83E90C005A06F5 /* Products */;
 			projectDirPath = "";
@@ -395,6 +410,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InsuranceAgentCRM/InsuranceAgentCRM.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U8J975998H;
@@ -423,6 +439,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InsuranceAgentCRM/InsuranceAgentCRM.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U8J975998H;
@@ -558,6 +575,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B9DB22A02E89C8C400A4D63A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B9DB22A12E89C8C400A4D63A /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B9DB22A02E89C8C400A4D63A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		B9DB22A32E89C8C400A4D63A /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B9DB22A02E89C8C400A4D63A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		B9DB22A52E89C8C400A4D63A /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B9DB22A02E89C8C400A4D63A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B99512282E83E90C005A06F5 /* Project object */;
 }

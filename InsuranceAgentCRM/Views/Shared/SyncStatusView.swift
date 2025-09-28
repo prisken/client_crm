@@ -1,21 +1,21 @@
 import SwiftUI
 
 struct SyncStatusView: View {
-    @StateObject private var cloudKitManager = CloudKitManager.shared
+    @StateObject private var firebaseManager = FirebaseManager.shared
     @State private var showingSyncAlert = false
     
     var body: some View {
         HStack(spacing: 8) {
             // Sync Status Icon
             Group {
-                if cloudKitManager.isSyncing {
+                if firebaseManager.isSyncing {
                     ProgressView()
                         .scaleEffect(0.8)
-                } else if cloudKitManager.isSignedIn {
-                    Image(systemName: "icloud.fill")
-                        .foregroundColor(.blue)
+                } else if firebaseManager.isConnected {
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.orange)
                 } else {
-                    Image(systemName: "icloud.slash")
+                    Image(systemName: "wifi.slash")
                         .foregroundColor(.red)
                 }
             }
@@ -27,7 +27,7 @@ struct SyncStatusView: View {
                     .font(.caption)
                     .foregroundColor(syncStatusColor)
                 
-                if let lastSync = cloudKitManager.lastSyncDate {
+                if let lastSync = firebaseManager.lastSyncDate {
                     Text("Last sync: \(lastSync, formatter: timeFormatter)")
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -37,15 +37,15 @@ struct SyncStatusView: View {
             Spacer()
             
             // Manual Sync Button
-            if cloudKitManager.isSignedIn {
+            if firebaseManager.isConnected {
                 Button(action: {
-                    cloudKitManager.forceSync()
+                    firebaseManager.forceSync()
                 }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.orange)
                 }
-                .disabled(cloudKitManager.isSyncing)
+                .disabled(firebaseManager.isSyncing)
             }
         }
         .padding(.horizontal, 12)
@@ -53,34 +53,34 @@ struct SyncStatusView: View {
         .background(Color(.systemGray6))
         .cornerRadius(8)
         .onTapGesture {
-            if !cloudKitManager.isSignedIn {
+            if !firebaseManager.isConnected {
                 showingSyncAlert = true
             }
         }
-        .alert("iCloud Sync", isPresented: $showingSyncAlert) {
-            Button("Settings") {
-                openSettings()
+        .alert("Firebase Sync", isPresented: $showingSyncAlert) {
+            Button("Check Connection") {
+                firebaseManager.checkConnection()
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Please sign in to iCloud in Settings to enable data sync across your devices.")
+            Text("Firebase sync is not connected. Please check your internet connection and try again.")
         }
     }
     
     private var syncStatusText: String {
-        if cloudKitManager.isSyncing {
+        if firebaseManager.isSyncing {
             return "Syncing..."
-        } else if cloudKitManager.isSignedIn {
-            return "iCloud Sync"
+        } else if firebaseManager.isConnected {
+            return "Firebase Sync"
         } else {
-            return "iCloud Unavailable"
+            return "Firebase Unavailable"
         }
     }
     
     private var syncStatusColor: Color {
-        if cloudKitManager.isSyncing {
-            return .blue
-        } else if cloudKitManager.isSignedIn {
+        if firebaseManager.isSyncing {
+            return .orange
+        } else if firebaseManager.isConnected {
             return .green
         } else {
             return .red

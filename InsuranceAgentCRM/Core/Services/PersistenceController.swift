@@ -1,5 +1,4 @@
 import CoreData
-import CloudKit
 import Foundation
 
 struct PersistenceController {
@@ -48,26 +47,15 @@ struct PersistenceController {
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         } else {
-            // Configure for iCloud + Core Data sync
+            // Configure for local Core Data storage
             guard let storeDescription = container.persistentStoreDescriptions.first else {
                 fatalError("Failed to retrieve a persistent store description.")
             }
             
-            // Set up CloudKit container
-            storeDescription.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-            storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-            
-            // Enable CloudKit sync
-            let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.insuranceagent.crm.InsuranceAgentCRM")
-            storeDescription.cloudKitContainerOptions = cloudKitOptions
-            
-            // Use Documents directory for local fallback
+            // Use Documents directory for local storage
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let databaseURL = documentsPath.appendingPathComponent("InsuranceAgentCRM.sqlite")
             storeDescription.url = databaseURL
-            
-            // Additional CloudKit settings for better sync
-            storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         }
         
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
@@ -82,39 +70,8 @@ struct PersistenceController {
         // Enable automatic merging of changes from parent context
         container.viewContext.automaticallyMergesChangesFromParent = true
         
-        // Configure view context for CloudKit
+        // Configure view context for local storage
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
     }
     
-    // MARK: - CloudKit Status
-    func checkCloudKitStatus() async -> Bool {
-        let container = CKContainer(identifier: "iCloud.com.insuranceagent.crm.InsuranceAgentCRM")
-        
-        do {
-            let accountStatus = try await container.accountStatus()
-            switch accountStatus {
-            case .available:
-                print("✅ iCloud account available")
-                return true
-            case .noAccount:
-                print("❌ No iCloud account")
-                return false
-            case .restricted:
-                print("❌ iCloud account restricted")
-                return false
-            case .couldNotDetermine:
-                print("❌ Could not determine iCloud status")
-                return false
-            case .temporarilyUnavailable:
-                print("❌ iCloud temporarily unavailable")
-                return false
-            @unknown default:
-                print("❌ Unknown iCloud status")
-                return false
-            }
-        } catch {
-            print("❌ Error checking iCloud status: \(error)")
-            return false
-        }
-    }
 }

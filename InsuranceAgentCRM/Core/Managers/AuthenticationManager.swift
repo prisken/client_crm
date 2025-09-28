@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreData
-import CloudKit
+import FirebaseAuth
 
 // MARK: - Authentication Manager
 class AuthenticationManager: ObservableObject {
@@ -10,7 +10,6 @@ class AuthenticationManager: ObservableObject {
     @Published var userRole: UserRole = .agent
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var isCloudKitAvailable = false
     
     enum UserRole: String, CaseIterable {
         case admin = "admin"
@@ -28,7 +27,6 @@ class AuthenticationManager: ObservableObject {
     
     init() {
         checkAuthenticationStatus()
-        checkCloudKitAvailability()
     }
     
     func checkAuthenticationStatus() {
@@ -46,13 +44,13 @@ class AuthenticationManager: ObservableObject {
     }
     
     func login(email: String, password: String, context: NSManagedObjectContext) async throws {
-        logInfo("Attempting login for email: \(email)")
+        logInfo("Attempting Firebase login for email: \(email)")
         isLoading = true
         errorMessage = nil
         
         do {
-            // In a real app, this would make an API call to your backend
-            // For now, we'll simulate authentication
+            // Try Firebase Authentication first
+            let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
             
             // Check if user exists in Core Data
             let request: NSFetchRequest<User> = User.fetchRequest()
@@ -61,14 +59,13 @@ class AuthenticationManager: ObservableObject {
             let users = try context.fetch(request)
             
             guard let user = users.first else {
-                logWarning("Login failed: User not found for email: \(email)")
+                logWarning("Login failed: User not found in Core Data for email: \(email)")
                 throw AuthenticationError.userNotFound
             }
             
-            // In a real app, you would hash the password and compare
-            // For now, we'll accept any password for demo purposes
-            let token = UUID().uuidString
-            keychain.saveToken(token)
+            // Save Firebase token
+            let idToken = try await authResult.user.getIDToken()
+            keychain.saveToken(idToken)
             
             await MainActor.run {
                 self.isAuthenticated = true
@@ -76,10 +73,10 @@ class AuthenticationManager: ObservableObject {
                 self.userRole = UserRole(rawValue: user.role ?? "agent") ?? .agent
             }
             
-            logInfo("User logged in successfully: \(user.email ?? "")")
+            logInfo("Firebase login successful: \(user.email ?? "")")
             
         } catch {
-            logError("Login failed: \(error.localizedDescription)")
+            logError("Firebase login failed: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             throw error
         }
@@ -89,6 +86,14 @@ class AuthenticationManager: ObservableObject {
     
     func logout() {
         logInfo("User logging out")
+        
+        // Sign out from Firebase
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            logError("Firebase sign out error: \(error)")
+        }
+        
         keychain.deleteToken()
         isAuthenticated = false
         currentUser = nil
@@ -97,28 +102,6 @@ class AuthenticationManager: ObservableObject {
         logInfo("User logged out successfully")
     }
     
-    // MARK: - CloudKit Integration
-    private func checkCloudKitAvailability() {
-        let container = CKContainer(identifier: "iCloud.com.insuranceagent.crm.InsuranceAgentCRM")
-        container.accountStatus { [weak self] accountStatus, error in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                
-                if let error = error {
-                    self.isCloudKitAvailable = false
-                    logError("❌ CloudKit check failed: \(error)")
-                    return
-                }
-                
-                self.isCloudKitAvailable = (accountStatus == .available)
-                if self.isCloudKitAvailable {
-                    logInfo("✅ CloudKit available - sync enabled")
-                } else {
-                    logWarning("⚠️ CloudKit not available - local storage only")
-                }
-            }
-        }
-    }
     
     private func loadCurrentUser() {
         // Load the first available user from Core Data
@@ -139,19 +122,34 @@ class AuthenticationManager: ObservableObject {
     }
     
     func createUser(email: String, password: String, role: UserRole, context: NSManagedObjectContext) async throws -> User {
-        logInfo("Creating user with email: \(email)")
+        logInfo("Creating Firebase user with email: \(email)")
         
-        let user = User(context: context)
-        user.id = UUID()
-        user.email = email
-        user.passwordHash = hashPassword(password) // In production, use proper hashing
-        user.role = role.rawValue
-        user.createdAt = Date()
-        user.updatedAt = Date()
-        
-        try context.save()
-        logInfo("User created successfully: \(email)")
-        return user
+        do {
+            // Create Firebase user
+            let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+            
+            // Create Core Data user
+            let user = User(context: context)
+            user.id = UUID()
+            user.email = email
+            user.passwordHash = "" // No need to store password hash with Firebase
+            user.role = role.rawValue
+            user.createdAt = Date()
+            user.updatedAt = Date()
+            
+            try context.save()
+            
+            // Save Firebase token
+            let idToken = try await authResult.user.getIDToken()
+            keychain.saveToken(idToken)
+            
+            logInfo("Firebase user created successfully: \(email)")
+            return user
+            
+        } catch {
+            logError("Firebase user creation failed: \(error.localizedDescription)")
+            throw error
+        }
     }
     
     private func hashPassword(_ password: String) -> String {

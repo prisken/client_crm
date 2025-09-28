@@ -3,7 +3,7 @@ import CoreData
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @EnvironmentObject var cloudKitManager: CloudKitManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var authManager = AuthenticationManager()
     
     var body: some View {
@@ -11,7 +11,7 @@ struct ContentView: View {
             if authManager.isAuthenticated {
                 MainTabView()
                     .environmentObject(authManager)
-                    .environmentObject(cloudKitManager)
+                    .environmentObject(firebaseManager)
             } else {
                 LoginView()
                     .environmentObject(authManager)
@@ -28,7 +28,7 @@ struct ContentView: View {
 
 struct MainTabView: View {
     @EnvironmentObject var authManager: AuthenticationManager
-    @EnvironmentObject var cloudKitManager: CloudKitManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     var body: some View {
         VStack(spacing: 0) {
@@ -65,7 +65,7 @@ struct MainTabView: View {
             }
             
             // Sync Status Bar
-            if !cloudKitManager.isSignedIn {
+            if !firebaseManager.isConnected {
                 SyncStatusView()
                     .padding(.horizontal)
                     .padding(.bottom, 8)
