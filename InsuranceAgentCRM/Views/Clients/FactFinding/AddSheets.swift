@@ -8,11 +8,11 @@ struct AddAssetSheet: View {
     let onSave: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var type = ""
+    @State private var type = "Investment"
     @State private var amount = ""
     @State private var description = ""
     
-    private let assetTypes = ["Investment", "Insurance Policy", "Fixed Asset", "Income"]
+    private let assetTypes = FormConstants.assetTypes
     
     var body: some View {
         NavigationView {
@@ -76,13 +76,13 @@ struct AddExpenseSheet: View {
     let onSave: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var type = ""
+    @State private var type = "Fixed"
     @State private var amount = ""
     @State private var frequency = "monthly"
     @State private var description = ""
     
-    private let expenseTypes = ["Fixed", "Monthly", "Variable", "Annual"]
-    private let frequencies = ["monthly", "quarterly", "annually", "one-time"]
+    private let expenseTypes = FormConstants.expenseTypes
+    private let frequencies = FormConstants.expenseFrequencies
     
     var body: some View {
         NavigationView {
