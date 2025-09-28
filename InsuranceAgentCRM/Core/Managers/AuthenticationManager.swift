@@ -58,9 +58,23 @@ class AuthenticationManager: ObservableObject {
             
             let users = try context.fetch(request)
             
-            guard let user = users.first else {
-                logWarning("Login failed: User not found in Core Data for email: \(email)")
-                throw AuthenticationError.userNotFound
+            var user: User
+            if let existingUser = users.first {
+                // User exists in Core Data, use it
+                user = existingUser
+                logInfo("Found existing user in Core Data: \(email)")
+            } else {
+                // User doesn't exist in Core Data, create it
+                user = User(context: context)
+                user.id = UUID()
+                user.email = email
+                user.role = "agent" // Default role
+                user.createdAt = Date()
+                user.updatedAt = Date()
+                user.passwordHash = "" // No need to store password with Firebase
+                
+                try context.save()
+                logInfo("Created new user in Core Data: \(email)")
             }
             
             // Save Firebase token
