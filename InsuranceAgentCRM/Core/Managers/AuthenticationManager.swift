@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import CoreData
+import CloudKit
 
 // MARK: - Authentication Manager
 class AuthenticationManager: ObservableObject {
@@ -9,6 +10,7 @@ class AuthenticationManager: ObservableObject {
     @Published var userRole: UserRole = .agent
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var isCloudKitAvailable = false
     
     enum UserRole: String, CaseIterable {
         case admin = "admin"
@@ -26,6 +28,7 @@ class AuthenticationManager: ObservableObject {
     
     init() {
         checkAuthenticationStatus()
+        checkCloudKitAvailability()
     }
     
     func checkAuthenticationStatus() {
@@ -92,6 +95,29 @@ class AuthenticationManager: ObservableObject {
         userRole = .agent
         errorMessage = nil
         logInfo("User logged out successfully")
+    }
+    
+    // MARK: - CloudKit Integration
+    private func checkCloudKitAvailability() {
+        let container = CKContainer(identifier: "iCloud.com.insuranceagent.crm.InsuranceAgentCRM")
+        container.accountStatus { [weak self] accountStatus, error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                if let error = error {
+                    self.isCloudKitAvailable = false
+                    logError("❌ CloudKit check failed: \(error)")
+                    return
+                }
+                
+                self.isCloudKitAvailable = (accountStatus == .available)
+                if self.isCloudKitAvailable {
+                    logInfo("✅ CloudKit available - sync enabled")
+                } else {
+                    logWarning("⚠️ CloudKit not available - local storage only")
+                }
+            }
+        }
     }
     
     private func loadCurrentUser() {

@@ -1,4 +1,5 @@
 import CoreData
+import CloudKit
 import Foundation
 
 struct PersistenceController {
@@ -43,27 +44,77 @@ struct PersistenceController {
 
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "InsuranceAgentCRM")
+        
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         } else {
-            // Use Documents directory for consistent database location
-            // This helps preserve data across app updates during development
+            // Configure for iCloud + Core Data sync
+            guard let storeDescription = container.persistentStoreDescriptions.first else {
+                fatalError("Failed to retrieve a persistent store description.")
+            }
+            
+            // Set up CloudKit container
+            storeDescription.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+            storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+            
+            // Enable CloudKit sync
+            let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.insuranceagent.crm.InsuranceAgentCRM")
+            storeDescription.cloudKitContainerOptions = cloudKitOptions
+            
+            // Use Documents directory for local fallback
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let databaseURL = documentsPath.appendingPathComponent("InsuranceAgentCRM.sqlite")
-            container.persistentStoreDescriptions.first?.url = databaseURL
+            storeDescription.url = databaseURL
+            
+            // Additional CloudKit settings for better sync
+            storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         }
-        
-        // Enable CloudKit sync
-        let storeDescription = container.persistentStoreDescriptions.first
-        storeDescription?.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-        storeDescription?.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+                print("❌ Core Data error: \(error), \(error.userInfo)")
+                // Don't fatal error - allow app to continue with local data
+            } else {
+                print("✅ Core Data store loaded successfully")
             }
         })
         
+        // Enable automatic merging of changes from parent context
         container.viewContext.automaticallyMergesChangesFromParent = true
+        
+        // Configure view context for CloudKit
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+    }
+    
+    // MARK: - CloudKit Status
+    func checkCloudKitStatus() async -> Bool {
+        let container = CKContainer(identifier: "iCloud.com.insuranceagent.crm.InsuranceAgentCRM")
+        
+        do {
+            let accountStatus = try await container.accountStatus()
+            switch accountStatus {
+            case .available:
+                print("✅ iCloud account available")
+                return true
+            case .noAccount:
+                print("❌ No iCloud account")
+                return false
+            case .restricted:
+                print("❌ iCloud account restricted")
+                return false
+            case .couldNotDetermine:
+                print("❌ Could not determine iCloud status")
+                return false
+            case .temporarilyUnavailable:
+                print("❌ iCloud temporarily unavailable")
+                return false
+            @unknown default:
+                print("❌ Unknown iCloud status")
+                return false
+            }
+        } catch {
+            print("❌ Error checking iCloud status: \(error)")
+            return false
+        }
     }
 }

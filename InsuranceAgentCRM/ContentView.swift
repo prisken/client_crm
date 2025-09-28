@@ -3,6 +3,7 @@ import CoreData
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var cloudKitManager: CloudKitManager
     @StateObject private var authManager = AuthenticationManager()
     
     var body: some View {
@@ -10,6 +11,7 @@ struct ContentView: View {
             if authManager.isAuthenticated {
                 MainTabView()
                     .environmentObject(authManager)
+                    .environmentObject(cloudKitManager)
             } else {
                 LoginView()
                     .environmentObject(authManager)
@@ -26,38 +28,48 @@ struct ContentView: View {
 
 struct MainTabView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var cloudKitManager: CloudKitManager
     
     var body: some View {
-        TabView {
-            DashboardView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Dashboard")
-                }
+        VStack(spacing: 0) {
+            TabView {
+                DashboardView()
+                    .tabItem {
+                        Image(systemName: "house.fill")
+                        Text("Dashboard")
+                    }
+                
+                ClientsView()
+                    .tabItem {
+                        Image(systemName: "person.2.fill")
+                        Text("Clients")
+                    }
+                
+                TasksView()
+                    .tabItem {
+                        Image(systemName: "checklist")
+                        Text("Tasks")
+                    }
+                
+                ProductsView()
+                    .tabItem {
+                        Image(systemName: "shippingbox.fill")
+                        Text("Products")
+                    }
+                
+                ReportsView()
+                    .tabItem {
+                        Image(systemName: "chart.bar.fill")
+                        Text("Reports")
+                    }
+            }
             
-            ClientsView()
-                .tabItem {
-                    Image(systemName: "person.2.fill")
-                    Text("Clients")
-                }
-            
-            TasksView()
-                .tabItem {
-                    Image(systemName: "checklist")
-                    Text("Tasks")
-                }
-            
-            ProductsView()
-                .tabItem {
-                    Image(systemName: "shippingbox.fill")
-                    Text("Products")
-                }
-            
-            ReportsView()
-                .tabItem {
-                    Image(systemName: "chart.bar.fill")
-                    Text("Reports")
-                }
+            // Sync Status Bar
+            if !cloudKitManager.isSignedIn {
+                SyncStatusView()
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+            }
         }
     }
 }
