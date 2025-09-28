@@ -111,8 +111,8 @@ struct FormConstants {
     ]
     
     static let productCategories = [
-        "Life Insurance", "Health Insurance", "Auto Insurance", "Home Insurance",
-        "Investment", "Retirement", "Education", "Other"
+        "Life Insurance", "Health Insurance", "Medical", "Critical Illness", "Auto Insurance", "Home Insurance",
+        "Investment", "Retirement", "Education", "General Insurance", "Savings", "Other"
     ]
     
     static let productStatuses = [

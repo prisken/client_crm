@@ -607,7 +607,7 @@ struct QuoteBuilderView: View {
                     }
                 }
                 
-                if let riders = product.riders, !riders.isEmpty {
+                if let riders = product.riders as? [String], !riders.isEmpty {
                     Section("Riders") {
                         ForEach(riders, id: \.self) { rider in
                             HStack {
