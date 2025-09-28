@@ -167,7 +167,12 @@ struct DashboardView: View {
             }
         }
         .onAppear {
-            viewModel.loadData(context: viewContext)
+            // Fetch from Firebase first, then load local data
+            firebaseManager.fetchAllData(context: viewContext)
+            // Load local data after a short delay to allow Firebase sync
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                viewModel.loadData(context: viewContext)
+            }
         }
     }
     

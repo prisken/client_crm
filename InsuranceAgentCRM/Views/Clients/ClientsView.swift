@@ -4,6 +4,7 @@ import CoreData
 struct ClientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = ClientsViewModel()
     
     // MARK: - State
@@ -37,10 +38,12 @@ struct ClientsView: View {
         .navigationTitle("Clients")
         .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                viewModel.loadClients(context: viewContext, currentUser: authManager.currentUser)
-                print("🔍 ClientsView appeared - Total clients: \(viewModel.clients.count)")
-                print("🔍 Context: \(viewContext)")
-                print("🔍 Store URL: \(viewContext.persistentStoreCoordinator?.persistentStores.first?.url?.lastPathComponent ?? "Unknown")")
+                // Fetch from Firebase first, then load local clients
+                firebaseManager.fetchAllData(context: viewContext)
+                // Load local data after Firebase sync
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    viewModel.loadClients(context: viewContext, currentUser: authManager.currentUser)
+                }
             }
         .sheet(isPresented: $showingAddClient) {
             AddClientView()
