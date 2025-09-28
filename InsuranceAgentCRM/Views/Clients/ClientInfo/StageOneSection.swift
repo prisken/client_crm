@@ -6,6 +6,7 @@ struct StageOneSection: View {
     let client: Client
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var selectedInterests: Set<String> = []
     @State private var selectedSocialStatus: Set<String> = []
     @State private var selectedLifeStage: Set<String> = []
@@ -215,6 +216,9 @@ struct StageOneSection: View {
         
         do {
             try viewContext.save()
+            
+            // Sync to Firebase
+            firebaseManager.syncClient(client)
             
             // Force UI refresh by updating the state
             DispatchQueue.main.async {

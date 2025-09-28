@@ -5,6 +5,7 @@ struct AddClientView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = ClientsViewModel()
     
     // MARK: - Form Fields
@@ -170,6 +171,9 @@ struct AddClientView: View {
                     window.rootViewController?.present(alert, animated: true)
                 }
             }
+            
+            // Sync to Firebase
+            firebaseManager.syncClient(client)
             
             viewModel.loadClients(context: viewContext)
             DispatchQueue.main.async {

@@ -6,6 +6,7 @@ struct ClientDetailView: View {
     let client: Client
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var isEditMode = false
 
     var body: some View {
