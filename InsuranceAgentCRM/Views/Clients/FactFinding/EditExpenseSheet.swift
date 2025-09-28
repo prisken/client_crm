@@ -77,7 +77,7 @@ struct EditExpenseSheet: View {
     private func saveExpense() {
         expense.name = name
         expense.type = type
-        expense.amount = NSDecimalNumber(string: amount)
+        expense.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
         expense.frequency = frequency
         expense.assetDescription = description.isEmpty ? nil : description
         expense.updatedAt = Date()

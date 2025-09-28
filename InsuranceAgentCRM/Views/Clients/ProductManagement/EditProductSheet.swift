@@ -117,8 +117,8 @@ struct EditProductSheet: View {
     private func saveProduct() {
         product.name = name
         product.category = category
-        product.amount = NSDecimalNumber(string: amount)
-        product.premium = NSDecimalNumber(string: premium)
+        product.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
+        product.premium = NSDecimalNumber(string: premium.isEmpty ? "0" : premium)
         product.coverage = coverage.isEmpty ? nil : coverage
         product.status = status
         product.assetDescription = description.isEmpty ? nil : description

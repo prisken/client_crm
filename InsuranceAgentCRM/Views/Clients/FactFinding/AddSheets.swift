@@ -52,7 +52,7 @@ struct AddAssetSheet: View {
         asset.id = UUID()
         asset.name = name
         asset.type = type
-        asset.amount = NSDecimalNumber(string: amount)
+        asset.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
         asset.assetDescription = description.isEmpty ? nil : description
         asset.createdAt = Date()
         asset.updatedAt = Date()
@@ -126,7 +126,7 @@ struct AddExpenseSheet: View {
         expense.id = UUID()
         expense.name = name
         expense.type = type
-        expense.amount = NSDecimalNumber(string: amount)
+        expense.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
         expense.frequency = frequency
         expense.assetDescription = description.isEmpty ? nil : description
         expense.createdAt = Date()

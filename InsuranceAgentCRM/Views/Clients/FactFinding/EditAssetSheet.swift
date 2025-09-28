@@ -70,7 +70,7 @@ struct EditAssetSheet: View {
     private func saveAsset() {
         asset.name = name
         asset.type = type
-        asset.amount = NSDecimalNumber(string: amount)
+        asset.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
         asset.assetDescription = description.isEmpty ? nil : description
         asset.updatedAt = Date()
         

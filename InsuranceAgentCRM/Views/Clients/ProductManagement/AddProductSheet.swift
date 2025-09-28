@@ -58,8 +58,8 @@ struct AddProductSheet: View {
         product.id = UUID()
         product.name = name
         product.category = category
-        product.amount = NSDecimalNumber(string: amount)
-        product.premium = NSDecimalNumber(string: premium)
+        product.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
+        product.premium = NSDecimalNumber(string: premium.isEmpty ? "0" : premium)
         product.coverage = coverage.isEmpty ? nil : coverage
         product.assetDescription = description.isEmpty ? nil : description
         product.status = status
