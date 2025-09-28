@@ -6,6 +6,7 @@ struct EditExpenseSheet: View {
     let expense: Expense
     let onSave: () -> Void
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var name: String = ""
     @State private var type: String = "Fixed"
@@ -77,6 +78,10 @@ struct EditExpenseSheet: View {
         
         do {
             try viewContext.save()
+            
+            // Sync expense to Firebase
+            firebaseManager.syncExpense(expense)
+            
             onSave()
         } catch {
             print("Error saving expense: \(error)")

@@ -7,6 +7,7 @@ struct AddAssetSheet: View {
     let context: NSManagedObjectContext
     let onSave: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var name = ""
     @State private var type = "Investment"
     @State private var amount = ""
@@ -61,6 +62,10 @@ struct AddAssetSheet: View {
         do {
             try context.save()
             print("✅ Asset saved successfully")
+            
+            // Sync asset to Firebase
+            firebaseManager.syncAsset(asset)
+            
             onSave()
             dismiss()
         } catch {
@@ -75,6 +80,7 @@ struct AddExpenseSheet: View {
     let context: NSManagedObjectContext
     let onSave: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var name = ""
     @State private var type = "Fixed"
     @State private var amount = ""
@@ -135,6 +141,10 @@ struct AddExpenseSheet: View {
         
         do {
             try context.save()
+            
+            // Sync expense to Firebase
+            firebaseManager.syncExpense(expense)
+            
             onSave()
             dismiss()
         } catch {

@@ -6,6 +6,7 @@ struct BasicInfoSection: View {
     let client: Client
     @Binding var isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var phone: String = ""
@@ -183,6 +184,9 @@ struct BasicInfoSection: View {
         
         do {
             try viewContext.save()
+            
+            // Sync client to Firebase
+            firebaseManager.syncClient(client)
             
             // Force UI refresh by updating the state
             DispatchQueue.main.async {

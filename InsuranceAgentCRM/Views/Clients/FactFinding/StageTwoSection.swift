@@ -6,6 +6,7 @@ struct StageTwoSection: View {
     let client: Client
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = FactFindingViewModel()
     @StateObject private var assetEditManager: AssetEditSheetManager
     @StateObject private var expenseEditManager: ExpenseEditSheetManager
@@ -138,6 +139,8 @@ struct StageTwoSection: View {
         viewContext.delete(asset)
         do {
             try viewContext.save()
+            // Sync client to Firebase after asset deletion
+            firebaseManager.syncClient(client)
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting asset: \(error)")
@@ -148,6 +151,8 @@ struct StageTwoSection: View {
         viewContext.delete(expense)
         do {
             try viewContext.save()
+            // Sync client to Firebase after expense deletion
+            firebaseManager.syncClient(client)
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting expense: \(error)")

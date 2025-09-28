@@ -8,6 +8,7 @@ struct AddProductSheet: View {
     let context: NSManagedObjectContext
     let onSave: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var name = ""
     @State private var amount = ""
     @State private var premium = ""
@@ -69,6 +70,10 @@ struct AddProductSheet: View {
         
         do {
             try context.save()
+            
+            // Sync product to Firebase
+            firebaseManager.syncProduct(product)
+            
             onSave()
             dismiss()
         } catch {

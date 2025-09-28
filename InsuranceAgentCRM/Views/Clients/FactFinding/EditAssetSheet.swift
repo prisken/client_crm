@@ -6,6 +6,7 @@ struct EditAssetSheet: View {
     let asset: Asset
     let onSave: () -> Void
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var name: String = ""
     @State private var type: String = "Investment"
@@ -69,6 +70,10 @@ struct EditAssetSheet: View {
         
         do {
             try viewContext.save()
+            
+            // Sync asset to Firebase
+            firebaseManager.syncAsset(asset)
+            
             onSave()
         } catch {
             print("Error saving asset: \(error)")

@@ -6,6 +6,7 @@ struct EditProductSheet: View {
     let product: ClientProduct
     let onSave: () -> Void
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var name: String = ""
     @State private var category: String = "Life"
@@ -113,6 +114,10 @@ struct EditProductSheet: View {
         
         do {
             try viewContext.save()
+            
+            // Sync product to Firebase
+            firebaseManager.syncProduct(product)
+            
             onSave()
         } catch {
             print("Error saving product: \(error)")

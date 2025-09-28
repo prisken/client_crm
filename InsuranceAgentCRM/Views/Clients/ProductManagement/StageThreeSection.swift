@@ -6,6 +6,7 @@ struct StageThreeSection: View {
     let client: Client
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = ProductPairingViewModel()
     @StateObject private var productEditManager: ProductEditSheetManager
     
@@ -101,6 +102,8 @@ struct StageThreeSection: View {
         viewContext.delete(product)
         do {
             try viewContext.save()
+            // Sync client to Firebase after product deletion
+            firebaseManager.syncClient(client)
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting product: \(error)")
