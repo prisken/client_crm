@@ -3,6 +3,7 @@ import CoreData
 
 struct ProductsView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = ProductsViewModel()
     @State private var showingAddProduct = false
     @State private var selectedProduct: Product?
@@ -70,13 +71,21 @@ struct ProductsView: View {
     
     private func deleteProducts(offsets: IndexSet) {
         withAnimation {
+            var deletedProducts: [Product] = []
             for index in offsets {
                 let product = filteredProducts[index]
+                deletedProducts.append(product)
                 viewContext.delete(product)
             }
             
             do {
                 try viewContext.save()
+                
+                // Sync deleted products to Firebase
+                for product in deletedProducts {
+                    firebaseManager.syncStandaloneProduct(product)
+                }
+                
                 viewModel.loadProducts(context: viewContext)
             } catch {
                 print("Error deleting product: \(error)")
@@ -176,6 +185,7 @@ struct ProductRowView: View {
 struct AddProductView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var code = ""
     @State private var name = ""
@@ -271,6 +281,9 @@ struct AddProductView: View {
         
         do {
             try viewContext.save()
+            
+            // Sync product to Firebase
+            firebaseManager.syncStandaloneProduct(product)
             dismiss()
         } catch {
             print("Error saving product: \(error)")
@@ -458,6 +471,7 @@ struct EditProductView: View {
     let product: Product
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var code: String
     @State private var name: String
@@ -560,6 +574,9 @@ struct EditProductView: View {
         
         do {
             try viewContext.save()
+            
+            // Sync product to Firebase
+            firebaseManager.syncStandaloneProduct(product)
             dismiss()
         } catch {
             print("Error saving product: \(error)")
@@ -571,6 +588,7 @@ struct QuoteBuilderView: View {
     let product: Product
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var selectedClient: Client?
     @State private var coverageAmount: Decimal = 0
@@ -726,6 +744,9 @@ struct QuoteBuilderView: View {
         
         do {
             try viewContext.save()
+            
+            // Sync product to Firebase
+            firebaseManager.syncStandaloneProduct(product)
             dismiss()
         } catch {
             print("Error saving quote: \(error)")

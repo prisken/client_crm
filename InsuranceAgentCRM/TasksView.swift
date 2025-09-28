@@ -4,6 +4,7 @@ import CoreData
 struct TasksView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var selectedFilter: TaskFilter = .all
     @State private var showingAddTask = false
     @State private var selectedTask: ClientTask?
@@ -155,6 +156,9 @@ struct TasksView: View {
             
             do {
                 try viewContext.save()
+                
+                // Sync task to Firebase
+                firebaseManager.syncTask(task)
             } catch {
                 print("Error updating task: \(error)")
             }
@@ -242,6 +246,7 @@ struct AddTaskView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var title = ""
     @State private var notes = ""
@@ -379,6 +384,10 @@ struct AddTaskView: View {
         
         do {
             try viewContext.save()
+            
+            // Sync task to Firebase
+            firebaseManager.syncStandaloneTask(task)
+            
             dismiss()
         } catch {
             print("Error saving task: \(error)")

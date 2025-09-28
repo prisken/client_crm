@@ -185,6 +185,95 @@ class FirebaseManager: ObservableObject {
         }
     }
     
+    func syncStandaloneProduct(_ product: Product) {
+        guard let productId = product.id?.uuidString else { return }
+        
+        var productData: [String: Any] = [
+            "id": productId,
+            "code": product.code ?? "",
+            "name": product.name ?? "",
+            "productType": product.productType ?? "",
+            "basePremium": product.basePremium?.doubleValue ?? 0,
+            "productDescription": product.productDescription ?? "",
+            "createdAt": product.createdAt ?? Date(),
+            "updatedAt": product.updatedAt ?? Date()
+        ]
+        
+        if let riders = product.riders as? [String] {
+            productData["riders"] = riders
+        }
+        
+        db.collection("standalone_products").document(productId).setData(productData) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error syncing standalone product: \(error)")
+                    self?.syncError = "Failed to sync standalone product: \(error.localizedDescription)"
+                } else {
+                    print("✅ Standalone product synced successfully")
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func syncStandaloneTask(_ task: Task) {
+        guard let taskId = task.id?.uuidString else { return }
+        
+        let taskData: [String: Any] = [
+            "id": taskId,
+            "title": task.title ?? "",
+            "notes": task.notes ?? "",
+            "dueDate": task.dueDate ?? Date(),
+            "priority": task.priority,
+            "status": task.status ?? "pending",
+            "effortHours": task.effortHours,
+            "estimatedCommission": task.estimatedCommission?.doubleValue ?? 0,
+            "probability": task.probability,
+            "stage": task.stage ?? "",
+            "createdAt": task.createdAt ?? Date(),
+            "updatedAt": task.updatedAt ?? Date(),
+            "clientId": task.client?.id?.uuidString ?? ""
+        ]
+        
+        db.collection("standalone_tasks").document(taskId).setData(taskData) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error syncing standalone task: \(error)")
+                    self?.syncError = "Failed to sync standalone task: \(error.localizedDescription)"
+                } else {
+                    print("✅ Standalone task synced successfully")
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func syncTask(_ task: ClientTask) {
+        guard let taskId = task.id?.uuidString else { return }
+        
+        let taskData: [String: Any] = [
+            "id": taskId,
+            "title": task.title ?? "",
+            "notes": task.notes ?? "",
+            "isCompleted": task.isCompleted,
+            "createdAt": task.createdAt ?? Date(),
+            "updatedAt": task.updatedAt ?? Date(),
+            "clientId": task.client?.id?.uuidString ?? ""
+        ]
+        
+        db.collection("tasks").document(taskId).setData(taskData) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error syncing task: \(error)")
+                    self?.syncError = "Failed to sync task: \(error.localizedDescription)"
+                } else {
+                    print("✅ Task synced successfully")
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
     // MARK: - Fetch Data from Firebase
     func fetchAllData(context: NSManagedObjectContext) {
         guard isConnected else {

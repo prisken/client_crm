@@ -4,6 +4,7 @@ import PDFKit
 
 struct ReportsView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = ReportsViewModel()
     @State private var selectedReportType: ReportType = .clientList
     @State private var showingExportOptions = false

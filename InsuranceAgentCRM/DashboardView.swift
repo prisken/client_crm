@@ -204,6 +204,20 @@ struct DashboardView: View {
                 firebaseManager.syncProduct(product)
             }
             
+            // Fetch all standalone products and sync them
+            let standaloneProductRequest: NSFetchRequest<Product> = Product.fetchRequest()
+            let standaloneProducts = try viewContext.fetch(standaloneProductRequest)
+            for product in standaloneProducts {
+                firebaseManager.syncStandaloneProduct(product)
+            }
+            
+            // Fetch all tasks and sync them
+            let taskRequest: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
+            let tasks = try viewContext.fetch(taskRequest)
+            for task in tasks {
+                firebaseManager.syncTask(task)
+            }
+            
             print("✅ All data synced to Firebase")
         } catch {
             print("❌ Error syncing data: \(error)")
