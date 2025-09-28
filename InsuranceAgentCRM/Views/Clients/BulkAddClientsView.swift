@@ -90,7 +90,7 @@ struct BulkAddClientsView: View {
             firstName: "",
             lastName: "",
             phone: "",
-            sex: "",
+            sex: "Select",
             age: 0
         ))
     }
@@ -234,7 +234,7 @@ struct ClientEntryRow: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Picker("Sex", selection: $entry.sex) {
-                        Text("Select").tag("")
+                        Text("Select").tag("Select")
                         Text("Male").tag("Male")
                         Text("Female").tag("Female")
                         Text("Other").tag("Other")

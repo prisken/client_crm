@@ -10,7 +10,7 @@ struct BasicInfoSection: View {
     @State private var lastName: String = ""
     @State private var phone: String = ""
     @State private var email: String = ""
-    @State private var sex: String = ""
+    @State private var sex: String = "Select"
     @State private var age: Int16 = 0
     @State private var refreshTrigger = false
     
@@ -67,7 +67,7 @@ struct BasicInfoSection: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Picker("Sex", selection: $sex) {
-                                Text("Select").tag("")
+                                Text("Select").tag("Select")
                                 Text("Male").tag("Male")
                                 Text("Female").tag("Female")
                                 Text("Other").tag("Other")
@@ -168,7 +168,7 @@ struct BasicInfoSection: View {
         lastName = client.lastName ?? ""
         phone = client.phone ?? ""
         email = client.email ?? ""
-        sex = client.sex ?? ""
+        sex = client.sex ?? "Select"
         age = client.age
     }
     

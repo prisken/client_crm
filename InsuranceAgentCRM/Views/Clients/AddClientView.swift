@@ -18,7 +18,7 @@ struct AddClientView: View {
     @State private var whatsappOptIn = false
     @State private var tags: [String] = []
     @State private var newTag = ""
-    @State private var sex = ""
+    @State private var sex = "Select"
     @State private var age: Int16 = 0
     
     var body: some View {
@@ -41,7 +41,7 @@ struct AddClientView: View {
                     
                     HStack {
                         Picker("Sex", selection: $sex) {
-                            Text("Select").tag("")
+                            Text("Select").tag("Select")
                             Text("Male").tag("Male")
                             Text("Female").tag("Female")
                             Text("Other").tag("Other")

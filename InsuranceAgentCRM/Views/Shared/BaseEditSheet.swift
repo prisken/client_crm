@@ -109,7 +109,7 @@ struct FormConstants {
     ]
     
     static let expenseFrequencies = [
-        "Monthly", "Quarterly", "Annually", "One-time", "Variable"
+        "monthly", "quarterly", "annually", "one-time", "Monthly", "Quarterly", "Annually", "One-time", "Variable"
     ]
     
     static let productCategories = [
