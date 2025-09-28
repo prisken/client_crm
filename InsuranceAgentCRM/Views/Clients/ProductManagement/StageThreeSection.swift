@@ -7,7 +7,7 @@ struct StageThreeSection: View {
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = ProductPairingViewModel()
-    @State private var selectedProduct: ClientProduct?
+    @State private var selectedProductID: UUID?
     @State private var showingEditProduct = false
     
     private let productCategories = [
@@ -40,7 +40,7 @@ struct StageThreeSection: View {
                                     print("Warning: Product context is nil, cannot edit")
                                     return
                                 }
-                                selectedProduct = product
+                                selectedProductID = product.id
                                 showingEditProduct = true
                             }
                         )
@@ -81,11 +81,12 @@ struct StageThreeSection: View {
             )
         }
         .sheet(isPresented: $showingEditProduct) {
-            if let product = selectedProduct {
+            if let productID = selectedProductID,
+               let product = viewModel.products.first(where: { $0.id == productID }) {
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                     showingEditProduct = false
-                    selectedProduct = nil
+                    selectedProductID = nil
                 })
             } else {
                 // Fallback view if product is nil
@@ -106,7 +107,7 @@ struct StageThreeSection: View {
                         
                         Button("Close") {
                             showingEditProduct = false
-                            selectedProduct = nil
+                            selectedProductID = nil
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -117,7 +118,7 @@ struct StageThreeSection: View {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button("Close") {
                                 showingEditProduct = false
-                                selectedProduct = nil
+                                selectedProductID = nil
                             }
                         }
                     }

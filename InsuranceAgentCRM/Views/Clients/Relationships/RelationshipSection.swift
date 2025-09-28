@@ -8,7 +8,7 @@ struct RelationshipSection: View {
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var relationshipManager: RelationshipManager
     @State private var showingAddRelationship = false
-    @State private var selectedRelationship: ClientRelationship?
+    @State private var selectedRelationshipID: UUID?
     @State private var showingEditRelationship = false
     @State private var showingFamilyTree = false
     
@@ -38,7 +38,8 @@ struct RelationshipSection: View {
             )
         }
         .sheet(isPresented: $showingEditRelationship) {
-            if let relationship = selectedRelationship {
+            if let relationshipID = selectedRelationshipID,
+               let relationship = relationshipManager.getRelationships(for: client).first(where: { $0.id == relationshipID }) {
                 EditRelationshipSheet(
                     relationship: relationship,
                     relationshipManager: relationshipManager
@@ -139,7 +140,7 @@ struct RelationshipSection: View {
                     relationship: relationship,
                     isEditMode: isEditMode,
                     onEdit: {
-                        selectedRelationship = relationship
+                        selectedRelationshipID = relationship.id
                         showingEditRelationship = true
                     },
                     onDelete: {
