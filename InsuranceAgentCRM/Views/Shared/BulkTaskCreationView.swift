@@ -13,74 +13,100 @@ struct BulkTaskCreationView: View {
     @State private var allClients: [Client] = []
     @State private var searchText = ""
     @State private var showingConfirmation = false
+    @State private var clientFilter = ClientFilter()
     
     var filteredClients: [Client] {
-        if searchText.isEmpty {
-            return allClients
+        var filtered = allClients
+        
+        // Apply search text filter
+        if !searchText.isEmpty {
+            let lowercaseSearch = searchText.lowercased()
+            filtered = filtered.filter { client in
+                let firstName = client.firstName?.lowercased() ?? ""
+                let lastName = client.lastName?.lowercased() ?? ""
+                return firstName.contains(lowercaseSearch) || lastName.contains(lowercaseSearch)
+            }
         }
-        let lowercaseSearch = searchText.lowercased()
-        return allClients.filter { client in
-            let firstName = client.firstName?.lowercased() ?? ""
-            let lastName = client.lastName?.lowercased() ?? ""
-            return firstName.contains(lowercaseSearch) || lastName.contains(lowercaseSearch)
+        
+        // Apply active status filter
+        switch clientFilter.activeStatus {
+        case .all:
+            break // No additional filtering needed
+        case .active:
+            filtered = filtered.filter { $0.isActive }
+        case .inactive:
+            filtered = filtered.filter { !$0.isActive }
         }
+        
+        // Apply tag filter
+        if !clientFilter.selectedTags.isEmpty {
+            filtered = filtered.filter { client in
+                client.hasAnyOfTags(clientFilter.selectedTags)
+            }
+        }
+        
+        return filtered
     }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Task Details Section
-                VStack(alignment: .leading, spacing: 16) {
+                // Compact Task Details Section
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Task Details")
-                        .font(.headline)
+                        .font(.subheadline)
                         .fontWeight(.semibold)
                         .padding(.horizontal)
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: 8) {
                         TextField("Task Title", text: $taskTitle)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                         
                         TextField("Notes (Optional)", text: $taskNotes, axis: .vertical)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .lineLimit(3...6)
+                            .lineLimit(2...4)
                     }
                     .padding(.horizontal)
                 }
-                .padding(.vertical)
+                .padding(.vertical, 8)
                 .background(Color(.systemGray6))
                 
                 // Client Selection Section
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Select Clients")
-                            .font(.headline)
+                            .font(.subheadline)
                             .fontWeight(.semibold)
                         
                         Spacer()
                         
                         Text("\(selectedClients.count) selected")
-                            .font(.subheadline)
+                            .font(.caption)
                             .foregroundColor(.secondary)
                     }
                     .padding(.horizontal)
+                    
+                    // Compact Filter Section
+                    CompactClientFilterView(filter: $clientFilter, tagManager: TagManager.shared)
+                        .padding(.horizontal)
                     
                     // Search Bar
                     SearchBar(text: $searchText)
                         .padding(.horizontal)
                     
-                    // Select All/None buttons
+                    // Select All/None buttons (Compact)
                     HStack {
                         Button("Select All") {
                             selectedClients = Set(filteredClients)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .font(.caption)
+                        .foregroundColor(.blue)
                         
                         Button("Select None") {
                             selectedClients.removeAll()
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .font(.caption)
+                        .foregroundColor(.red)
                         
                         Spacer()
                     }

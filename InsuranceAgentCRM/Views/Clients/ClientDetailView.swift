@@ -75,4 +75,34 @@ extension Client {
         let lastName = self.lastName ?? ""
         return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
     }
+    
+    // MARK: - Filtering Helpers
+    var isActive: Bool {
+        guard let products = self.products as? Set<ClientProduct> else { return false }
+        return products.contains { $0.status?.lowercased() == "active" }
+    }
+    
+    var allTags: [String] {
+        var tags: [String] = []
+        
+        if let interests = self.interests {
+            tags.append(contentsOf: interests)
+        }
+        
+        if let socialStatus = self.socialStatus {
+            tags.append(contentsOf: socialStatus)
+        }
+        
+        if let lifeStage = self.lifeStage {
+            tags.append(contentsOf: lifeStage)
+        }
+        
+        return tags
+    }
+    
+    func hasAnyOfTags(_ selectedTags: Set<String>) -> Bool {
+        guard !selectedTags.isEmpty else { return true }
+        let clientTags = Set(allTags)
+        return !clientTags.intersection(selectedTags).isEmpty
+    }
 }

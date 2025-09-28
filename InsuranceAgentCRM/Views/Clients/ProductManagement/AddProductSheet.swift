@@ -12,6 +12,7 @@ struct AddProductSheet: View {
     @State private var amount = ""
     @State private var premium = ""
     @State private var coverage = ""
+    @State private var status = "Proposed"
     @State private var description = ""
     
     var body: some View {
@@ -25,6 +26,13 @@ struct AddProductSheet: View {
                         .keyboardType(.decimalPad)
                     TextField("Coverage Details", text: $coverage, axis: .vertical)
                         .lineLimit(2...4)
+                    
+                    Picker("Status", selection: $status) {
+                        ForEach(FormConstants.productStatuses, id: \.self) { statusOption in
+                            Text(statusOption).tag(statusOption)
+                        }
+                    }
+                    
                     TextField("Description (Optional)", text: $description, axis: .vertical)
                         .lineLimit(3...6)
                 }
@@ -54,7 +62,7 @@ struct AddProductSheet: View {
         product.premium = NSDecimalNumber(string: premium)
         product.coverage = coverage.isEmpty ? nil : coverage
         product.assetDescription = description.isEmpty ? nil : description
-        product.status = "proposed"
+        product.status = status
         product.createdAt = Date()
         product.updatedAt = Date()
         product.client = client

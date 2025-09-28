@@ -25,9 +25,9 @@
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="whatsappOptIn" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="whatsappOptInDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="interests" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer"/>
-        <attribute name="socialStatus" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer"/>
-        <attribute name="lifeStage" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer"/>
+        <attribute name="interests" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer" customClassName="[String]"/>
+        <attribute name="socialStatus" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer" customClassName="[String]"/>
+        <attribute name="lifeStage" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer" customClassName="[String]"/>
         <attribute name="retirementDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="sex" optional="YES" attributeType="String"/>
         <attribute name="age" optional="YES" attributeType="Integer 16" usesScalarValueType="YES"/>

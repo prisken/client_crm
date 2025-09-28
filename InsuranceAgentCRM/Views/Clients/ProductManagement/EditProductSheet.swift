@@ -14,51 +14,64 @@ struct EditProductSheet: View {
     @State private var coverage: String = ""
     @State private var status: String = ""
     @State private var description: String = ""
+    @State private var isDataLoaded: Bool = false
     
     var body: some View {
-        BaseEditSheet(
-            title: "Edit Product",
-            onSave: {
-                saveProduct()
-            }
-        ) {
-            Section("Product Details") {
-                FormTextField(title: "Product Name", text: $name)
-                
-                FormPicker(
-                    title: "Category",
-                    selection: $category,
-                    options: FormConstants.productCategories
-                )
-                
-                FormTextField(
-                    title: "Coverage Amount",
-                    text: $amount,
-                    keyboardType: .decimalPad
-                )
-                
-                FormTextField(
-                    title: "Premium Amount",
-                    text: $premium,
-                    keyboardType: .decimalPad
-                )
-                
-                FormTextEditor(
-                    title: "Coverage Details",
-                    text: $coverage,
-                    lineLimit: 2...4
-                )
-                
-                FormPicker(
-                    title: "Status",
-                    selection: $status,
-                    options: FormConstants.productStatuses
-                )
-                
-                FormTextEditor(
-                    title: "Description (Optional)",
-                    text: $description
-                )
+        Group {
+            if !isDataLoaded {
+                VStack {
+                    ProgressView()
+                    Text("Loading product details...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                BaseEditSheet(
+                    title: "Edit Product",
+                    onSave: {
+                        saveProduct()
+                    }
+                ) {
+                    Section("Product Details") {
+                        FormTextField(title: "Product Name", text: $name)
+                        
+                        FormPicker(
+                            title: "Category",
+                            selection: $category,
+                            options: FormConstants.productCategories
+                        )
+                        
+                        FormTextField(
+                            title: "Coverage Amount",
+                            text: $amount,
+                            keyboardType: .decimalPad
+                        )
+                        
+                        FormTextField(
+                            title: "Premium Amount",
+                            text: $premium,
+                            keyboardType: .decimalPad
+                        )
+                        
+                        FormTextEditor(
+                            title: "Coverage Details",
+                            text: $coverage,
+                            lineLimit: 2...4
+                        )
+                        
+                        FormPicker(
+                            title: "Status",
+                            selection: $status,
+                            options: FormConstants.productStatuses
+                        )
+                        
+                        FormTextEditor(
+                            title: "Description (Optional)",
+                            text: $description
+                        )
+                    }
+                }
             }
         }
         .onAppear {
@@ -77,9 +90,18 @@ struct EditProductSheet: View {
         // Ensure we have a valid product
         guard product.managedObjectContext != nil else {
             print("Warning: Product context is nil")
+            isDataLoaded = false
             return
         }
         
+        // Validate product has required data
+        guard product.name != nil else {
+            print("Warning: Product name is nil")
+            isDataLoaded = false
+            return
+        }
+        
+        // Load data from product
         name = product.name ?? ""
         category = product.category ?? ""
         amount = String(product.amount?.doubleValue ?? 0)
@@ -88,6 +110,8 @@ struct EditProductSheet: View {
         status = product.status ?? ""
         description = product.assetDescription ?? ""
         
+        // Mark data as loaded
+        isDataLoaded = true
     }
     
     private func saveProduct() {

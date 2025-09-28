@@ -35,6 +35,11 @@ struct StageThreeSection: View {
                                 deleteProduct(product)
                             },
                             onEditProduct: { product in
+                                // Validate product before setting it
+                                guard product.managedObjectContext != nil else {
+                                    print("Warning: Product context is nil, cannot edit")
+                                    return
+                                }
                                 selectedProduct = product
                                 showingEditProduct = true
                             }
@@ -76,19 +81,47 @@ struct StageThreeSection: View {
             )
         }
         .sheet(isPresented: $showingEditProduct) {
-            if let product = selectedProduct {
+            if let product = selectedProduct, product.managedObjectContext != nil {
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
+                    showingEditProduct = false
+                    selectedProduct = nil
                 })
             } else {
-                // Fallback view if product is nil
-                VStack {
-                    Text("Product not found")
-                        .font(.title2)
-                    Text("Please try again")
-                        .foregroundColor(.secondary)
+                // Fallback view if product is nil or invalid
+                NavigationView {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.orange)
+                        
+                        Text("Product Not Available")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        
+                        Text("The selected product is no longer available or has been deleted.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Close") {
+                            showingEditProduct = false
+                            selectedProduct = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
+                    .navigationTitle("Error")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Close") {
+                                showingEditProduct = false
+                                selectedProduct = nil
+                            }
+                        }
+                    }
                 }
-                .padding()
             }
         }
     }

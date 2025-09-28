@@ -16,15 +16,6 @@ struct StageOneSection: View {
     @State private var isSocialStatusCollapsed = false
     @State private var isLifeStageCollapsed = false
     
-    // MARK: - Dynamic Tag System
-    @StateObject private var tagManager: TagManager
-    
-    init(client: Client, isEditMode: Bool) {
-        self.client = client
-        self.isEditMode = isEditMode
-        self._tagManager = StateObject(wrappedValue: TagManager(context: PersistenceController.shared.container.viewContext))
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Stage One: Introduction & Connection")
@@ -72,7 +63,7 @@ struct StageOneSection: View {
                 DynamicTagSelectionView(
                     category: .interest,
                     selectedTags: $selectedInterests,
-                    tagManager: tagManager
+                    tagManager: TagManager.shared
                 )
             }
             
@@ -86,7 +77,7 @@ struct StageOneSection: View {
                 DynamicTagSelectionView(
                     category: .socialStatus,
                     selectedTags: $selectedSocialStatus,
-                    tagManager: tagManager
+                    tagManager: TagManager.shared
                 )
             }
             
@@ -100,7 +91,7 @@ struct StageOneSection: View {
                 DynamicTagSelectionView(
                     category: .lifeStage,
                     selectedTags: $selectedLifeStage,
-                    tagManager: tagManager
+                    tagManager: TagManager.shared
                 )
             }
         }
@@ -109,7 +100,7 @@ struct StageOneSection: View {
     // MARK: - View Mode View
     private var viewModeView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let interests = client.interests as? [String], !interests.isEmpty {
+            if let interests = client.interests, !interests.isEmpty {
                 CollapsibleDisplaySection(
                     title: "Interests",
                     isCollapsed: $isInterestsCollapsed,
@@ -118,12 +109,12 @@ struct StageOneSection: View {
                     DynamicTagDisplayView(
                         category: .interest,
                         selectedTags: Set(interests),
-                        tagManager: tagManager
+                        tagManager: TagManager.shared
                     )
                 }
             }
             
-            if let socialStatus = client.socialStatus as? [String], !socialStatus.isEmpty {
+            if let socialStatus = client.socialStatus, !socialStatus.isEmpty {
                 CollapsibleDisplaySection(
                     title: "Social Status",
                     isCollapsed: $isSocialStatusCollapsed,
@@ -132,12 +123,12 @@ struct StageOneSection: View {
                     DynamicTagDisplayView(
                         category: .socialStatus,
                         selectedTags: Set(socialStatus),
-                        tagManager: tagManager
+                        tagManager: TagManager.shared
                     )
                 }
             }
             
-            if let lifeStage = client.lifeStage as? [String], !lifeStage.isEmpty {
+            if let lifeStage = client.lifeStage, !lifeStage.isEmpty {
                 CollapsibleDisplaySection(
                     title: "Life Stage",
                     isCollapsed: $isLifeStageCollapsed,
@@ -146,7 +137,7 @@ struct StageOneSection: View {
                     DynamicTagDisplayView(
                         category: .lifeStage,
                         selectedTags: Set(lifeStage),
-                        tagManager: tagManager
+                        tagManager: TagManager.shared
                     )
                 }
             }
@@ -161,9 +152,9 @@ struct StageOneSection: View {
     
     // MARK: - Computed Properties
     private var hasAnyTags: Bool {
-        let hasInterests = (client.interests as? [String])?.isEmpty == false
-        let hasSocialStatus = (client.socialStatus as? [String])?.isEmpty == false
-        let hasLifeStage = (client.lifeStage as? [String])?.isEmpty == false
+        let hasInterests = client.interests?.isEmpty == false
+        let hasSocialStatus = client.socialStatus?.isEmpty == false
+        let hasLifeStage = client.lifeStage?.isEmpty == false
         return hasInterests || hasSocialStatus || hasLifeStage
     }
     
@@ -196,19 +187,19 @@ struct StageOneSection: View {
     }
     
     private func loadClientData() {
-        if let interests = client.interests as? [String] {
+        if let interests = client.interests {
             selectedInterests = Set(interests)
         } else {
             selectedInterests = Set()
         }
         
-        if let socialStatus = client.socialStatus as? [String] {
+        if let socialStatus = client.socialStatus {
             selectedSocialStatus = Set(socialStatus)
         } else {
             selectedSocialStatus = Set()
         }
         
-        if let lifeStage = client.lifeStage as? [String] {
+        if let lifeStage = client.lifeStage {
             selectedLifeStage = Set(lifeStage)
         } else {
             selectedLifeStage = Set()
@@ -217,9 +208,9 @@ struct StageOneSection: View {
     
     private func saveClientData() {
         // Update the client object with selected tags
-        client.interests = Array(selectedInterests) as NSObject
-        client.socialStatus = Array(selectedSocialStatus) as NSObject
-        client.lifeStage = Array(selectedLifeStage) as NSObject
+        client.interests = Array(selectedInterests)
+        client.socialStatus = Array(selectedSocialStatus)
+        client.lifeStage = Array(selectedLifeStage)
         client.updatedAt = Date()
         
         do {

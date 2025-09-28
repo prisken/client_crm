@@ -8,14 +8,35 @@ struct ClientsListView: View {
     let onDeleteClient: (Client) -> Void
     @State private var showingDeleteConfirmation = false
     @State private var clientToDelete: Client?
+    @State private var clientFilter = ClientFilter()
+    @Environment(\.managedObjectContext) private var viewContext
+    
+    init(viewModel: ClientsViewModel, searchText: String, selectedClient: Binding<Client?>, onDeleteClient: @escaping (Client) -> Void) {
+        self.viewModel = viewModel
+        self.searchText = searchText
+        self._selectedClient = selectedClient
+        self.onDeleteClient = onDeleteClient
+    }
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            // Filter Section
+            ClientFilterView(filter: $clientFilter, tagManager: TagManager.shared)
+                .padding(.horizontal)
+                .padding(.top, 8)
+            
+            // Clients List
             if viewModel.clients.isEmpty {
                 EmptyStateView(
                     icon: "person.2.fill",
                     title: "No Clients Yet",
                     subtitle: "Add your first client to get started"
+                )
+            } else if filteredClients.isEmpty {
+                EmptyStateView(
+                    icon: "magnifyingglass",
+                    title: "No clients match your filters",
+                    subtitle: "Try adjusting your search or filter criteria"
                 )
             } else {
                 List(selection: $selectedClient) {
@@ -51,16 +72,36 @@ struct ClientsListView: View {
     }
     
     private var filteredClients: [Client] {
-        if searchText.isEmpty {
-            return viewModel.clients
-        } else {
-            return viewModel.clients.filter { client in
+        var filtered = viewModel.clients
+        
+        // Apply search text filter
+        if !searchText.isEmpty {
+            filtered = filtered.filter { client in
                 let fullName = "\(client.firstName ?? "") \(client.lastName ?? "")"
                 return fullName.localizedCaseInsensitiveContains(searchText) ||
                        client.email?.localizedCaseInsensitiveContains(searchText) == true ||
                        client.phone?.localizedCaseInsensitiveContains(searchText) == true
             }
         }
+        
+        // Apply active status filter
+        switch clientFilter.activeStatus {
+        case .all:
+            break // No additional filtering needed
+        case .active:
+            filtered = filtered.filter { $0.isActive }
+        case .inactive:
+            filtered = filtered.filter { !$0.isActive }
+        }
+        
+        // Apply tag filter
+        if !clientFilter.selectedTags.isEmpty {
+            filtered = filtered.filter { client in
+                client.hasAnyOfTags(clientFilter.selectedTags)
+            }
+        }
+        
+        return filtered
     }
     
     private func deleteClients(offsets: IndexSet) {
@@ -79,11 +120,11 @@ struct ClientsListView: View {
         guard let client = clientToDelete else { return }
         
         withAnimation {
-            viewModel.context.delete(client)
+            viewContext.delete(client)
             
             do {
-                try viewModel.context.save()
-                viewModel.loadClients(context: viewModel.context)
+                try viewContext.save()
+                viewModel.loadClients(context: viewContext)
             } catch {
                 logError("Error deleting client: \(error.localizedDescription)")
             }

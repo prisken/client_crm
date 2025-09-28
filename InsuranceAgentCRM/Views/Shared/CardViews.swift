@@ -87,7 +87,7 @@ struct ProductCardView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
-                    CardStatusBadge(status: product.status ?? "", color: statusColor)
+                    CardStatusBadge(status: product.status?.isEmpty == false ? product.status! : "Not Set", color: statusColor)
                 }
                 
                 HStack {
@@ -114,7 +114,8 @@ struct ProductCardView: View {
     }
     
     private var statusColor: Color {
-        switch product.status?.lowercased() {
+        let status = product.status?.lowercased() ?? ""
+        switch status {
         case "active":
             return .green
         case "approved":
@@ -127,6 +128,8 @@ struct ProductCardView: View {
             return .red
         case "expired":
             return .gray
+        case "", "not set":
+            return .orange
         default:
             return .secondary
         }

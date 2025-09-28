@@ -15,6 +15,9 @@ class TagManager: ObservableObject {
     
     private let context: NSManagedObjectContext
     
+    // Singleton instance
+    static let shared = TagManager(context: PersistenceController.shared.container.viewContext)
+    
     init(context: NSManagedObjectContext) {
         self.context = context
         loadTags()
@@ -94,19 +97,19 @@ class TagManager: ObservableObject {
             for client in clients {
                 switch category {
                 case .interest:
-                    if var interests = client.interests as? [String] {
+                    if var interests = client.interests {
                         interests.removeAll { $0 == tag }
-                        client.interests = interests.isEmpty ? nil : interests as NSObject
+                        client.interests = interests.isEmpty ? nil : interests
                     }
                 case .socialStatus:
-                    if var socialStatus = client.socialStatus as? [String] {
+                    if var socialStatus = client.socialStatus {
                         socialStatus.removeAll { $0 == tag }
-                        client.socialStatus = socialStatus.isEmpty ? nil : socialStatus as NSObject
+                        client.socialStatus = socialStatus.isEmpty ? nil : socialStatus
                     }
                 case .lifeStage:
-                    if var lifeStage = client.lifeStage as? [String] {
+                    if var lifeStage = client.lifeStage {
                         lifeStage.removeAll { $0 == tag }
-                        client.lifeStage = lifeStage.isEmpty ? nil : lifeStage as NSObject
+                        client.lifeStage = lifeStage.isEmpty ? nil : lifeStage
                     }
                 }
             }
