@@ -84,7 +84,8 @@ class FirebaseManager: ObservableObject {
             "socialStatus": client.socialStatus as? [String] ?? [],
             "lifeStage": client.lifeStage as? [String] ?? [],
             "whatsappOptIn": client.whatsappOptIn,
-            "whatsappOptInDate": client.whatsappOptInDate ?? Date()
+            "whatsappOptInDate": client.whatsappOptInDate ?? Date(),
+            "ownerId": client.owner?.id?.uuidString ?? ""
         ]
         
         db.collection("clients").document(clientId).setData(clientData) { [weak self] error in
@@ -295,6 +296,7 @@ class FirebaseManager: ObservableObject {
                 return
             }
             
+            print("📥 Fetching \(documents.count) clients from Firebase")
             for document in documents {
                 let data = document.data()
                 self?.createOrUpdateClient(from: data, context: context)
@@ -419,7 +421,26 @@ class FirebaseManager: ObservableObject {
             client.tags = tags as NSObject
         }
         
+        // Associate client with the correct user
+        if let ownerIdString = data["ownerId"] as? String,
+           let ownerId = UUID(uuidString: ownerIdString) {
+            // Find the user by ID
+            let userRequest: NSFetchRequest<User> = User.fetchRequest()
+            userRequest.predicate = NSPredicate(format: "id == %@", ownerId as CVarArg)
+            if let user = try? context.fetch(userRequest).first {
+                client.owner = user
+            }
+        } else if client.owner == nil {
+            // Fallback: associate with current user if no ownerId in data
+            let userRequest: NSFetchRequest<User> = User.fetchRequest()
+            userRequest.fetchLimit = 1
+            if let currentUser = try? context.fetch(userRequest).first {
+                client.owner = currentUser
+            }
+        }
+        
         try? context.save()
+        print("✅ Client \(client.firstName ?? "") \(client.lastName ?? "") synced from Firebase with owner: \(client.owner?.email ?? "None")")
     }
     
     private func createOrUpdateAsset(from data: [String: Any], context: NSManagedObjectContext) {
