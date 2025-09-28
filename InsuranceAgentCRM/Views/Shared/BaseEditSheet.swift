@@ -98,12 +98,14 @@ struct FormTextEditor: View {
 struct FormConstants {
     static let assetTypes = [
         "Cash", "Savings Account", "Investment", "Property", "Vehicle", 
-        "Jewelry", "Art", "Collectibles", "Business", "Other"
+        "Jewelry", "Art", "Collectibles", "Business", "Insurance Policy", 
+        "Fixed Asset", "Income", "Other"
     ]
     
     static let expenseTypes = [
         "Housing", "Food", "Transportation", "Healthcare", "Education",
-        "Entertainment", "Utilities", "Insurance", "Debt", "Other"
+        "Entertainment", "Utilities", "Insurance", "Debt", "Fixed", 
+        "Monthly", "Variable", "Annual", "Other"
     ]
     
     static let expenseFrequencies = [
