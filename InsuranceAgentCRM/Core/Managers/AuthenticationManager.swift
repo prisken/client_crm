@@ -3,10 +3,15 @@ import SwiftUI
 import CoreData
 import FirebaseAuth
 
+// Type aliases for clarity
+typealias CoreDataUser = User
+typealias FirebaseAuthUser = FirebaseAuth.User
+
 // MARK: - Authentication Manager
 class AuthenticationManager: ObservableObject {
     @Published var isAuthenticated = false
-    @Published var currentUser: User?
+    @Published var currentUser: CoreDataUser? // Core Data User
+    @Published var firebaseUser: FirebaseAuthUser? // Firebase Auth User
     @Published var userRole: UserRole = .agent
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -32,14 +37,34 @@ class AuthenticationManager: ObservableObject {
     func checkAuthenticationStatus() {
         logInfo("Checking authentication status")
         
-        if keychain.getToken() != nil {
-            // In a real app, you would validate the token with your backend
-            // For now, we'll assume it's valid if it exists
+        // Check Firebase Auth status first
+        if let firebaseUser = Auth.auth().currentUser {
+            self.firebaseUser = firebaseUser
+            logInfo("Firebase user authenticated: \(firebaseUser.email ?? "N/A")")
+            
+            // Load or create local Core Data user
+            loadOrCreateLocalUser(firebaseUser: firebaseUser)
+            
+            // Set authentication status
             isAuthenticated = true
-            loadCurrentUser()
-            logInfo("User is authenticated")
+            
+            // Save Firebase token
+            firebaseUser.getIDToken { [weak self] token, error in
+                if let token = token {
+                    self?.keychain.saveToken(token)
+                }
+            }
+            
         } else {
-            logInfo("No authentication token found")
+            // Check local token as fallback
+            if keychain.getToken() != nil {
+                isAuthenticated = true
+                loadCurrentUser()
+                logInfo("Local authentication token found")
+            } else {
+                isAuthenticated = false
+                logInfo("No authentication found")
+            }
         }
     }
     
@@ -53,7 +78,7 @@ class AuthenticationManager: ObservableObject {
             let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
             
             // Check if user exists in Core Data
-            let request: NSFetchRequest<User> = User.fetchRequest()
+            let request: NSFetchRequest<CoreDataUser> = User.fetchRequest()
             request.predicate = NSPredicate(format: "email == %@", email)
             
             let users = try context.fetch(request)
@@ -65,7 +90,7 @@ class AuthenticationManager: ObservableObject {
                 logInfo("Found existing user in Core Data: \(email)")
             } else {
                 // User doesn't exist in Core Data, create it
-                user = User(context: context)
+                user = CoreDataUser(context: context)
                 user.id = UUID()
                 user.email = email
                 user.role = "agent" // Default role
@@ -121,7 +146,7 @@ class AuthenticationManager: ObservableObject {
         // Load the first available user from Core Data
         // In production, you would validate the stored token and load the specific user
         let context = PersistenceController.shared.container.viewContext
-        let request: NSFetchRequest<User> = User.fetchRequest()
+        let request: NSFetchRequest<CoreDataUser> = CoreDataUser.fetchRequest()
         request.fetchLimit = 1
         
         do {
@@ -135,6 +160,38 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
+    private func loadOrCreateLocalUser(firebaseUser: FirebaseAuthUser) {
+        let context = PersistenceController.shared.container.viewContext
+        let request: NSFetchRequest<CoreDataUser> = CoreDataUser.fetchRequest()
+        request.predicate = NSPredicate(format: "email == %@", firebaseUser.email ?? "")
+        
+        do {
+            let users = try context.fetch(request)
+            if let existingUser = users.first {
+                // User exists, update if needed
+                self.currentUser = existingUser
+                self.userRole = UserRole(rawValue: existingUser.role ?? "agent") ?? .agent
+                logInfo("Found existing Core Data user: \(existingUser.email ?? "")")
+            } else {
+                // Create new user in Core Data
+                let newUser = CoreDataUser(context: context)
+                newUser.id = UUID()
+                newUser.email = firebaseUser.email
+                newUser.role = UserRole.agent.rawValue // Default role
+                newUser.createdAt = Date()
+                newUser.updatedAt = Date()
+                // No password hash needed for Firebase users
+                
+                try context.save()
+                self.currentUser = newUser
+                self.userRole = .agent
+                logInfo("Created new Core Data user: \(newUser.email ?? "")")
+            }
+        } catch {
+            logError("Failed to load or create local user: \(error)")
+        }
+    }
+    
     func createUser(email: String, password: String, role: UserRole, context: NSManagedObjectContext) async throws -> User {
         logInfo("Creating Firebase user with email: \(email)")
         
@@ -143,7 +200,7 @@ class AuthenticationManager: ObservableObject {
             let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
             
             // Create Core Data user
-            let user = User(context: context)
+            let user = CoreDataUser(context: context)
             user.id = UUID()
             user.email = email
             user.passwordHash = "" // No need to store password hash with Firebase
