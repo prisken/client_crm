@@ -15,6 +15,18 @@ struct ClientDetailView: View {
         }
         .onAppear {
             logInfo("ClientDetailView appeared for client: \(client.displayName) (ID: \(client.id?.uuidString ?? "nil"))")
+            // Reset edit mode when switching to a different client
+            if isEditMode {
+                print("🔧 DEBUG: Resetting edit mode for new client: \(client.displayName)")
+                isEditMode = false
+            }
+        }
+        .onChange(of: client.id) { oldValue, newValue in
+            // Reset edit mode when client changes
+            if oldValue != newValue && isEditMode {
+                print("🔧 DEBUG: Client changed, resetting edit mode")
+                isEditMode = false
+            }
         }
     }
     
@@ -30,6 +42,13 @@ struct ClientDetailView: View {
             Button(isEditMode ? "Done" : "Edit") {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isEditMode.toggle()
+                    if isEditMode {
+                        print("🔧 DEBUG: Edit mode activated - reloading all data for client: \(client.displayName)")
+                        // Force refresh the view context to ensure all data is fresh
+                        viewContext.refreshAllObjects()
+                    } else {
+                        print("🔧 DEBUG: Edit mode deactivated for client: \(client.displayName)")
+                    }
                 }
             }
             .buttonStyle(.borderedProminent)

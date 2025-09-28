@@ -9,6 +9,7 @@ struct StageThreeSection: View {
     @StateObject private var viewModel = ProductPairingViewModel()
     @State private var selectedProductID: UUID?
     @State private var showingEditProduct = false
+    @State private var selectedProduct: ClientProduct?
     
     private let productCategories = [
         "Investment", "Medical", "Critical Illness", "Life", "General Insurance", "Savings"
@@ -41,7 +42,18 @@ struct StageThreeSection: View {
                                     return
                                 }
                                 selectedProductID = product.id
+                                
+                                // Immediately fetch the product to avoid timing issues
+                                if let productID = product.id {
+                                    selectedProduct = fetchProduct(by: productID)
+                                    print("🔧 DEBUG: Immediate fetch result - Product: \(selectedProduct?.name ?? "nil"), Found: \(selectedProduct != nil)")
+                                    print("🔧 DEBUG: selectedProduct state after fetch: \(selectedProduct?.name ?? "nil"), context: \(selectedProduct?.managedObjectContext != nil ? "valid" : "nil")")
+                                }
+                                
+                                print("🔧 DEBUG: selectedProductID set to \(product.id?.uuidString ?? "nil"), selectedProduct cached, showingEditProduct = true")
+                                print("🔧 DEBUG: About to set showingEditProduct = true, selectedProduct is: \(selectedProduct?.name ?? "nil")")
                                 showingEditProduct = true
+                                print("🔧 DEBUG: showingEditProduct set to true, selectedProduct is still: \(selectedProduct?.name ?? "nil")")
                             }
                         )
                     }
@@ -67,8 +79,23 @@ struct StageThreeSection: View {
         .onAppear {
             viewModel.loadData(client: client, context: viewContext)
         }
+        .onChange(of: isEditMode) { oldValue, newValue in
+            if newValue {
+                print("🔧 DEBUG: Edit mode activated for Stage Three - reloading data")
+                viewModel.loadData(client: client, context: viewContext)
+            }
+        }
         .onChange(of: client.id) { _, _ in
             viewModel.loadData(client: client, context: viewContext)
+        }
+        .onChange(of: selectedProduct) { oldValue, newValue in
+            print("🔧 DEBUG: selectedProduct changed from '\(oldValue?.name ?? "nil")' to '\(newValue?.name ?? "nil")'")
+        }
+        .onChange(of: showingEditProduct) { oldValue, newValue in
+            print("🔧 DEBUG: showingEditProduct changed from \(oldValue) to \(newValue)")
+            if newValue {
+                print("🔧 DEBUG: showingEditProduct = true, selectedProduct is: \(selectedProduct?.name ?? "nil")")
+            }
         }
         .sheet(isPresented: $viewModel.showingAddProduct) {
             AddProductSheet(
@@ -81,12 +108,20 @@ struct StageThreeSection: View {
             )
         }
         .sheet(isPresented: $showingEditProduct) {
-            if let productID = selectedProductID,
-               let product = fetchProduct(by: productID) {
+            // Force evaluation order to prevent timing issues
+            let _ = print("🔧 Sheet presentation - showingEditProduct: \(showingEditProduct)")
+            let _ = print("🔧 Sheet presentation - selectedProductID: \(selectedProductID?.uuidString ?? "nil")")
+            let _ = print("🔧 Sheet presentation - selectedProduct: \(selectedProduct?.name ?? "nil")")
+            let _ = print("🔧 Sheet presentation - selectedProduct context: \(selectedProduct?.managedObjectContext != nil ? "valid" : "nil")")
+            let _ = print("🔧 Sheet presentation - selectedProduct is nil: \(selectedProduct == nil)")
+            
+            if let product = selectedProduct {
+                let _ = print("🔧 Sheet presentation - Using selectedProduct: \(product.name ?? "nil")")
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
                     showingEditProduct = false
                     selectedProductID = nil
+                    selectedProduct = nil
                 })
             } else {
                 // Fallback view if product is nil
@@ -108,6 +143,7 @@ struct StageThreeSection: View {
                         Button("Close") {
                             showingEditProduct = false
                             selectedProductID = nil
+                            selectedProduct = nil
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -119,6 +155,7 @@ struct StageThreeSection: View {
                             Button("Close") {
                                 showingEditProduct = false
                                 selectedProductID = nil
+                                selectedProduct = nil
                             }
                         }
                     }
@@ -137,19 +174,28 @@ struct StageThreeSection: View {
         }
     }
     
+    // Helper function to fetch fresh product by ID
     private func fetchProduct(by id: UUID) -> ClientProduct? {
+        print("🔧 DEBUG: fetchProduct called with ID: \(id.uuidString)")
         let request: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         request.fetchLimit = 1
         
         do {
             let products = try viewContext.fetch(request)
+            print("🔧 DEBUG: CoreData fetch returned \(products.count) products")
+            if let product = products.first {
+                print("🔧 DEBUG: Found product: \(product.name ?? "nil"), ID: \(product.id?.uuidString ?? "nil")")
+            } else {
+                print("❌ DEBUG: No product found with ID: \(id.uuidString)")
+            }
             return products.first
         } catch {
-            print("Error fetching product: \(error)")
+            print("❌ DEBUG: Error fetching product: \(error)")
             return nil
         }
     }
+    
 }
 
 // MARK: - Product Category View
