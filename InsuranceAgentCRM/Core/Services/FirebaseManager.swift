@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseCore
 import FirebaseFirestore
+import FirebaseAuth
 import SwiftUI
 import Combine
 import CoreData
@@ -88,7 +89,13 @@ class FirebaseManager: ObservableObject {
             "ownerId": client.owner?.id?.uuidString ?? ""
         ]
         
-        db.collection("clients").document(clientId).setData(clientData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).setData(clientData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing client: \(error)")
@@ -115,7 +122,13 @@ class FirebaseManager: ObservableObject {
             "updatedAt": asset.updatedAt ?? Date()
         ]
         
-        db.collection("assets").document(assetId).setData(assetData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("assets").document(assetId).setData(assetData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing asset: \(error)")
@@ -143,7 +156,13 @@ class FirebaseManager: ObservableObject {
             "updatedAt": expense.updatedAt ?? Date()
         ]
         
-        db.collection("expenses").document(expenseId).setData(expenseData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("expenses").document(expenseId).setData(expenseData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing expense: \(error)")
@@ -173,7 +192,13 @@ class FirebaseManager: ObservableObject {
             "updatedAt": product.updatedAt ?? Date()
         ]
         
-        db.collection("products").document(productId).setData(productData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("products").document(productId).setData(productData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing product: \(error)")
@@ -204,7 +229,13 @@ class FirebaseManager: ObservableObject {
             productData["riders"] = riders
         }
         
-        db.collection("standalone_products").document(productId).setData(productData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("standalone_products").document(productId).setData(productData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing standalone product: \(error)")
@@ -236,7 +267,13 @@ class FirebaseManager: ObservableObject {
             "clientId": task.client?.id?.uuidString ?? ""
         ]
         
-        db.collection("standalone_tasks").document(taskId).setData(taskData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("standalone_tasks").document(taskId).setData(taskData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing standalone task: \(error)")
@@ -262,7 +299,13 @@ class FirebaseManager: ObservableObject {
             "clientId": task.client?.id?.uuidString ?? ""
         ]
         
-        db.collection("tasks").document(taskId).setData(taskData) { [weak self] error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("tasks").document(taskId).setData(taskData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error syncing task: \(error)")
@@ -284,8 +327,17 @@ class FirebaseManager: ObservableObject {
         
         isSyncing = true
         
-        // Fetch clients from Firebase
-        db.collection("clients").getDocuments { [weak self] snapshot, error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
+            return
+        }
+        
+        // Fetch clients from Firebase (user-specific collection)
+        db.collection("users").document(currentUserId).collection("clients").getDocuments { [weak self] snapshot, error in
             if let error = error {
                 self?.syncError = "Error fetching clients: \(error.localizedDescription)"
                 return
@@ -308,7 +360,13 @@ class FirebaseManager: ObservableObject {
     }
     
     private func fetchAssets(context: NSManagedObjectContext) {
-        db.collection("assets").getDocuments { [weak self] snapshot, error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("assets").getDocuments { [weak self] snapshot, error in
             if let error = error {
                 print("❌ Error fetching assets: \(error)")
                 return
@@ -327,7 +385,13 @@ class FirebaseManager: ObservableObject {
     }
     
     private func fetchExpenses(context: NSManagedObjectContext) {
-        db.collection("expenses").getDocuments { [weak self] snapshot, error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("expenses").getDocuments { [weak self] snapshot, error in
             if let error = error {
                 print("❌ Error fetching expenses: \(error)")
                 return
@@ -346,7 +410,13 @@ class FirebaseManager: ObservableObject {
     }
     
     private func fetchProducts(context: NSManagedObjectContext) {
-        db.collection("products").getDocuments { [weak self] snapshot, error in
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("products").getDocuments { [weak self] snapshot, error in
             DispatchQueue.main.async {
                 self?.isSyncing = false
                 if let error = error {
