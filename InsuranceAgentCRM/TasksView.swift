@@ -100,8 +100,7 @@ struct TasksView: View {
                 }
             }
             .sheet(isPresented: $showingAddTask) {
-                Text("Tasks are created in the Client detail view")
-                    .padding()
+                BulkTaskCreationView()
             }
         } detail: {
             if let selectedTask = selectedTask {

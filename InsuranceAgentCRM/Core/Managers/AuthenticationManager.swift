@@ -95,11 +95,21 @@ class AuthenticationManager: ObservableObject {
     }
     
     private func loadCurrentUser() {
-        logInfo("Loading current user")
-        // Load current user from Core Data based on stored token
-        // This is a simplified version - in production you'd validate the token
-        // For now, we'll create a default user or load the first available user
-        logInfo("Current user loaded successfully")
+        // Load the first available user from Core Data
+        // In production, you would validate the stored token and load the specific user
+        let context = PersistenceController.shared.container.viewContext
+        let request: NSFetchRequest<User> = User.fetchRequest()
+        request.fetchLimit = 1
+        
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first {
+                self.currentUser = user
+                self.userRole = UserRole(rawValue: user.role ?? "agent") ?? .agent
+            }
+        } catch {
+            logError("Failed to load current user: \(error)")
+        }
     }
     
     func createUser(email: String, password: String, role: UserRole, context: NSManagedObjectContext) async throws -> User {

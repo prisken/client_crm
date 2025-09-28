@@ -45,6 +45,12 @@ struct PersistenceController {
         container = NSPersistentContainer(name: "InsuranceAgentCRM")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
+        } else {
+            // Use Documents directory for consistent database location
+            // This helps preserve data across app updates during development
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let databaseURL = documentsPath.appendingPathComponent("InsuranceAgentCRM.sqlite")
+            container.persistentStoreDescriptions.first?.url = databaseURL
         }
         
         // Enable CloudKit sync
