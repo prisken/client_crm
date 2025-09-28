@@ -7,9 +7,13 @@ struct StageThreeSection: View {
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = ProductPairingViewModel()
-    @State private var selectedProductID: UUID?
-    @State private var showingEditProduct = false
-    @State private var selectedProduct: ClientProduct?
+    @StateObject private var productEditManager: ProductEditSheetManager
+    
+    init(client: Client, isEditMode: Bool) {
+        self.client = client
+        self.isEditMode = isEditMode
+        self._productEditManager = StateObject(wrappedValue: ProductEditSheetManager(context: PersistenceController.shared.container.viewContext))
+    }
     
     private let productCategories = [
         "Investment", "Medical", "Critical Illness", "Life", "General Insurance", "Savings"
@@ -36,24 +40,7 @@ struct StageThreeSection: View {
                                 deleteProduct(product)
                             },
                             onEditProduct: { product in
-                                // Validate product before setting it
-                                guard product.managedObjectContext != nil else {
-                                    print("Warning: Product context is nil, cannot edit")
-                                    return
-                                }
-                                selectedProductID = product.id
-                                
-                                // Immediately fetch the product to avoid timing issues
-                                if let productID = product.id {
-                                    selectedProduct = fetchProduct(by: productID)
-                                    print("🔧 DEBUG: Immediate fetch result - Product: \(selectedProduct?.name ?? "nil"), Found: \(selectedProduct != nil)")
-                                    print("🔧 DEBUG: selectedProduct state after fetch: \(selectedProduct?.name ?? "nil"), context: \(selectedProduct?.managedObjectContext != nil ? "valid" : "nil")")
-                                }
-                                
-                                print("🔧 DEBUG: selectedProductID set to \(product.id?.uuidString ?? "nil"), selectedProduct cached, showingEditProduct = true")
-                                print("🔧 DEBUG: About to set showingEditProduct = true, selectedProduct is: \(selectedProduct?.name ?? "nil")")
-                                showingEditProduct = true
-                                print("🔧 DEBUG: showingEditProduct set to true, selectedProduct is still: \(selectedProduct?.name ?? "nil")")
+                                productEditManager.startEdit(for: product)
                             }
                         )
                     }
@@ -88,15 +75,6 @@ struct StageThreeSection: View {
         .onChange(of: client.id) { _, _ in
             viewModel.loadData(client: client, context: viewContext)
         }
-        .onChange(of: selectedProduct) { oldValue, newValue in
-            print("🔧 DEBUG: selectedProduct changed from '\(oldValue?.name ?? "nil")' to '\(newValue?.name ?? "nil")'")
-        }
-        .onChange(of: showingEditProduct) { oldValue, newValue in
-            print("🔧 DEBUG: showingEditProduct changed from \(oldValue) to \(newValue)")
-            if newValue {
-                print("🔧 DEBUG: showingEditProduct = true, selectedProduct is: \(selectedProduct?.name ?? "nil")")
-            }
-        }
         .sheet(isPresented: $viewModel.showingAddProduct) {
             AddProductSheet(
                 client: client,
@@ -107,59 +85,14 @@ struct StageThreeSection: View {
                 }
             )
         }
-        .sheet(isPresented: $showingEditProduct) {
-            // Force evaluation order to prevent timing issues
-            let _ = print("🔧 Sheet presentation - showingEditProduct: \(showingEditProduct)")
-            let _ = print("🔧 Sheet presentation - selectedProductID: \(selectedProductID?.uuidString ?? "nil")")
-            let _ = print("🔧 Sheet presentation - selectedProduct: \(selectedProduct?.name ?? "nil")")
-            let _ = print("🔧 Sheet presentation - selectedProduct context: \(selectedProduct?.managedObjectContext != nil ? "valid" : "nil")")
-            let _ = print("🔧 Sheet presentation - selectedProduct is nil: \(selectedProduct == nil)")
-            
-            if let product = selectedProduct {
-                let _ = print("🔧 Sheet presentation - Using selectedProduct: \(product.name ?? "nil")")
+        .sheet(isPresented: $productEditManager.showingEditProduct) {
+            if let product = productEditManager.selectedProduct {
                 EditProductSheet(product: product, onSave: {
                     viewModel.loadData(client: client, context: viewContext)
-                    showingEditProduct = false
-                    selectedProductID = nil
-                    selectedProduct = nil
+                    productEditManager.dismissEdit()
                 })
             } else {
-                // Fallback view if product is nil
-                NavigationView {
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.largeTitle)
-                            .foregroundColor(.orange)
-                        
-                        Text("Product Not Available")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                        
-                        Text("The selected product is no longer available or has been deleted.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Button("Close") {
-                            showingEditProduct = false
-                            selectedProductID = nil
-                            selectedProduct = nil
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding()
-                    .navigationTitle("Error")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") {
-                                showingEditProduct = false
-                                selectedProductID = nil
-                                selectedProduct = nil
-                            }
-                        }
-                    }
-                }
+                ErrorSheet(message: "Product not found", onDismiss: productEditManager.dismissEdit)
             }
         }
     }
@@ -174,27 +107,6 @@ struct StageThreeSection: View {
         }
     }
     
-    // Helper function to fetch fresh product by ID
-    private func fetchProduct(by id: UUID) -> ClientProduct? {
-        print("🔧 DEBUG: fetchProduct called with ID: \(id.uuidString)")
-        let request: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        request.fetchLimit = 1
-        
-        do {
-            let products = try viewContext.fetch(request)
-            print("🔧 DEBUG: CoreData fetch returned \(products.count) products")
-            if let product = products.first {
-                print("🔧 DEBUG: Found product: \(product.name ?? "nil"), ID: \(product.id?.uuidString ?? "nil")")
-            } else {
-                print("❌ DEBUG: No product found with ID: \(id.uuidString)")
-            }
-            return products.first
-        } catch {
-            print("❌ DEBUG: Error fetching product: \(error)")
-            return nil
-        }
-    }
     
 }
 
