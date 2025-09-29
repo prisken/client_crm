@@ -93,6 +93,10 @@ struct TaskChecklistSection: View {
         }
         do {
             try viewContext.save()
+            
+            // Sync to Firebase
+            firebaseManager.syncTask(task)
+            
             logInfo("Task toggled successfully")
         } catch {
             logError("Error updating task: \(error.localizedDescription)")
@@ -154,6 +158,10 @@ struct TaskChecklistSection: View {
         
         do {
             try viewContext.save()
+            
+            // Sync to Firebase
+            firebaseManager.syncTask(task)
+            
             logInfo("Task added successfully for client: \(client.firstName ?? "") \(client.lastName ?? "") (ID: \(client.id?.uuidString ?? "nil"))")
         } catch {
             logError("Error adding task: \(error.localizedDescription)")

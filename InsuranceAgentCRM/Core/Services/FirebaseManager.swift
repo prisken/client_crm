@@ -472,6 +472,96 @@ class FirebaseManager: ObservableObject {
         }
     }
     
+    func syncRemark(_ remark: TaskRemark) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let remarkId = remark.id?.uuidString,
+              let taskId = remark.task?.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Remark or Task ID not found"
+            }
+            return
+        }
+        
+        let data: [String: Any] = [
+            "id": remarkId,
+            "content": remark.content ?? "",
+            "createdAt": remark.createdAt ?? Date(),
+            "updatedAt": remark.updatedAt ?? Date(),
+            "taskId": taskId
+        ]
+        
+        // Save remark to Firebase under the task's collection
+        db.collection("users").document(currentUser.uid).collection("tasks").document(taskId).collection("remarks").document(remarkId).setData(data) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to sync remark: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func syncRelationship(_ relationship: ClientRelationship) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let clientAId = relationship.clientA.id?.uuidString,
+              let clientBId = relationship.clientB.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Relationship or Client ID not found"
+            }
+            return
+        }
+        
+        let relationshipId = relationship.id.uuidString
+        
+        let data: [String: Any] = [
+            "id": relationshipId,
+            "clientAId": clientAId,
+            "clientBId": clientBId,
+            "relationshipType": relationship.relationshipType.rawValue,
+            "notes": relationship.notes ?? "",
+            "createdAt": relationship.createdAt,
+            "updatedAt": relationship.updatedAt
+        ]
+        
+        // Save relationship to Firebase
+        db.collection("users").document(currentUser.uid).collection("relationships").document(relationshipId).setData(data) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to sync relationship: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
     // MARK: - Fetch Data from Firebase
     func fetchAllData(context: NSManagedObjectContext) {
         guard isConnected else {

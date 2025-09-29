@@ -6,6 +6,7 @@ struct BulkTaskCreationView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     @State private var taskTitle = ""
     @State private var taskNotes = ""
@@ -243,6 +244,8 @@ struct BulkTaskCreationView: View {
         let taskTitleTrimmed = taskTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         let taskNotesTrimmed = taskNotes.trimmingCharacters(in: .whitespacesAndNewlines)
         
+        var createdTasks: [ClientTask] = []
+        
         for client in selectedClients {
             let task = ClientTask(context: viewContext)
             task.id = UUID()
@@ -252,10 +255,17 @@ struct BulkTaskCreationView: View {
             task.createdAt = Date()
             task.updatedAt = Date()
             task.client = client
+            createdTasks.append(task)
         }
         
         do {
             try viewContext.save()
+            
+            // Sync all tasks to Firebase
+            for task in createdTasks {
+                firebaseManager.syncTask(task)
+            }
+            
             dismiss()
         } catch {
             logError("Error creating bulk tasks: \(error)")

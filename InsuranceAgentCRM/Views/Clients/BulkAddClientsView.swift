@@ -5,6 +5,7 @@ struct BulkAddClientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var viewModel = ClientsViewModel()
     
     // MARK: - State
@@ -154,6 +155,10 @@ struct BulkAddClientsView: View {
         
         do {
             try viewContext.save()
+            
+            // Sync to Firebase
+            firebaseManager.syncClient(client)
+            
             processedCount += 1
         } catch {
             print("Error saving client \(entry.firstName) \(entry.lastName): \(error)")

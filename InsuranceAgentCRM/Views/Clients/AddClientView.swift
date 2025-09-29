@@ -206,6 +206,9 @@ struct AddClientView: View {
         do {
             try viewContext.save()
             
+            // Sync to Firebase
+            firebaseManager.syncClient(client)
+            
             // Test if the client was actually saved
             let fetchRequest: NSFetchRequest<Client> = Client.fetchRequest()
             let savedClients = try viewContext.fetch(fetchRequest)

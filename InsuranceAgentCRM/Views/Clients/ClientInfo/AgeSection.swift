@@ -6,6 +6,7 @@ struct AgeSection: View {
     let client: Client
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var age: Int16 = 0
     @State private var refreshTrigger = false
     
@@ -72,6 +73,9 @@ struct AgeSection: View {
         
         do {
             try viewContext.save()
+            
+            // Sync to Firebase
+            firebaseManager.syncClient(client)
             
             // Force UI refresh by updating the state
             DispatchQueue.main.async {

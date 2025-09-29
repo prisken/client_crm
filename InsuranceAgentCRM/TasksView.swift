@@ -474,9 +474,11 @@ struct AddTaskView: View {
 class TaskRemarkManager: ObservableObject {
     @Published var remarks: [TaskRemark] = []
     private let context: NSManagedObjectContext
+    private let firebaseManager: FirebaseManager
     
-    init(context: NSManagedObjectContext) {
+    init(context: NSManagedObjectContext, firebaseManager: FirebaseManager) {
         self.context = context
+        self.firebaseManager = firebaseManager
     }
     
     func loadRemarks(for task: ClientTask) {
@@ -497,6 +499,12 @@ class TaskRemarkManager: ObservableObject {
         
         do {
             try context.save()
+            
+            // Sync remark to Firebase
+            DispatchQueue.main.async {
+                self.firebaseManager.syncRemark(remark)
+            }
+            
             loadRemarks(for: task)
             print("✅ New remark added to task: \(task.title ?? "Unknown")")
         } catch {
@@ -532,6 +540,7 @@ class TaskRemarkManager: ObservableObject {
 struct ClientTaskDetailView: View {
     let task: ClientTask
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @StateObject private var remarkManager: TaskRemarkManager
     @State private var showingAddRemark = false
     @State private var newRemark = ""
@@ -541,7 +550,7 @@ struct ClientTaskDetailView: View {
     
     init(task: ClientTask) {
         self.task = task
-        self._remarkManager = StateObject(wrappedValue: TaskRemarkManager(context: PersistenceController.shared.container.viewContext))
+        self._remarkManager = StateObject(wrappedValue: TaskRemarkManager(context: PersistenceController.shared.container.viewContext, firebaseManager: FirebaseManager.shared))
     }
     
     var body: some View {
