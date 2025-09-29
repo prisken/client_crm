@@ -58,6 +58,12 @@ struct AddProductSheet: View {
     
     private func saveProduct() {
         print("🔄 Starting to save product: \(name)")
+        print("🔄 Client: \(client.firstName ?? "nil") \(client.lastName ?? "nil") (ID: \(client.id?.uuidString ?? "nil"))")
+        
+        guard client.id != nil else {
+            print("❌ Error: Client has no ID")
+            return
+        }
         
         let product = ClientProduct(context: context)
         product.id = UUID()
@@ -71,6 +77,8 @@ struct AddProductSheet: View {
         product.createdAt = Date()
         product.updatedAt = Date()
         product.client = client
+        
+        print("🔄 Product client set: \(product.client?.firstName ?? "nil") \(product.client?.lastName ?? "nil")")
         
         do {
             try context.save()

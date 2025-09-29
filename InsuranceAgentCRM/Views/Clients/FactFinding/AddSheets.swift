@@ -51,6 +51,12 @@ struct AddAssetSheet: View {
     
     private func saveAsset() {
         print("🔄 Starting to save asset: \(name)")
+        print("🔄 Client: \(client.firstName ?? "nil") \(client.lastName ?? "nil") (ID: \(client.id?.uuidString ?? "nil"))")
+        
+        guard client.id != nil else {
+            print("❌ Error: Client has no ID")
+            return
+        }
         
         let asset = Asset(context: context)
         asset.id = UUID()
@@ -61,6 +67,8 @@ struct AddAssetSheet: View {
         asset.createdAt = Date()
         asset.updatedAt = Date()
         asset.client = client
+        
+        print("🔄 Asset client set: \(asset.client?.firstName ?? "nil") \(asset.client?.lastName ?? "nil")")
         
         do {
             try context.save()
@@ -136,6 +144,12 @@ struct AddExpenseSheet: View {
     
     private func saveExpense() {
         print("🔄 Starting to save expense: \(name)")
+        print("🔄 Client: \(client.firstName ?? "nil") \(client.lastName ?? "nil") (ID: \(client.id?.uuidString ?? "nil"))")
+        
+        guard client.id != nil else {
+            print("❌ Error: Client has no ID")
+            return
+        }
         
         let expense = Expense(context: context)
         expense.id = UUID()
@@ -147,6 +161,8 @@ struct AddExpenseSheet: View {
         expense.createdAt = Date()
         expense.updatedAt = Date()
         expense.client = client
+        
+        print("🔄 Expense client set: \(expense.client?.firstName ?? "nil") \(expense.client?.lastName ?? "nil")")
         
         do {
             try context.save()
