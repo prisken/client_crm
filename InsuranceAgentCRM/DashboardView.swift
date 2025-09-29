@@ -49,18 +49,37 @@ struct DashboardView: View {
                             }
                         }
                         
-                        HStack(spacing: 12) {
-                            Button("Sync All Data to Firebase") {
-                                syncAllData()
+                        // Responsive Button Layout
+                        if DeviceInfo.isIPhone {
+                            VStack(spacing: 8) {
+                                Button("Sync All Data to Firebase") {
+                                    syncAllData()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(isSyncing)
+                                .frame(maxWidth: .infinity)
+                                
+                                Button("Fetch Data from Firebase") {
+                                    fetchAllData()
+                                }
+                                .buttonStyle(.bordered)
+                                .disabled(isSyncing)
+                                .frame(maxWidth: .infinity)
                             }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(isSyncing)
-                            
-                            Button("Fetch Data from Firebase") {
-                                fetchAllData()
+                        } else {
+                            HStack(spacing: 12) {
+                                Button("Sync All Data to Firebase") {
+                                    syncAllData()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(isSyncing)
+                                
+                                Button("Fetch Data from Firebase") {
+                                    fetchAllData()
+                                }
+                                .buttonStyle(.bordered)
+                                .disabled(isSyncing)
                             }
-                            .buttonStyle(.bordered)
-                            .disabled(isSyncing)
                         }
                         
                         if let syncError = firebaseManager.syncError {
@@ -81,11 +100,13 @@ struct DashboardView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
                     
-                    // Stats Cards
-                    LazyVGrid(columns: [
+                    // Stats Cards - Responsive Grid
+                    LazyVGrid(columns: DeviceInfo.isIPhone ? [
+                        GridItem(.flexible())
+                    ] : [
                         GridItem(.flexible()),
                         GridItem(.flexible())
-                    ], spacing: 16) {
+                    ], spacing: DeviceInfo.isIPhone ? 12 : 16) {
                         StatCard(
                             title: "Total Clients",
                             value: "\(viewModel.totalClients)",

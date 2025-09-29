@@ -125,4 +125,6 @@ struct DeviceInfo {
     static let screenHeight = UIScreen.main.bounds.height
     static let isSmallScreen = screenWidth < 375
     static let isLargeScreen = screenWidth > 414
+    static let isCompactWidth = screenWidth < 768 // iPad Pro 11" and below, all iPhones
+    static let isRegularWidth = !isCompactWidth // iPad Pro 12.9" and larger
 }

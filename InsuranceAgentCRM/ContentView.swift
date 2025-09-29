@@ -67,7 +67,7 @@ struct MainTabView: View {
             // Sync Status Bar - Always show for debugging
             SyncStatusView()
                 .padding(.horizontal)
-                .padding(.bottom, 8)
+                .padding(.bottom, DeviceInfo.isIPhone ? 4 : 8)
         }
     }
 }

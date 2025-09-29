@@ -140,6 +140,33 @@ extension View {
         self.navigationTitle(title)
             .navigationBarTitleDisplayMode(displayMode)
     }
+    
+    // MARK: - Responsive Layout
+    @ViewBuilder
+    func adaptiveLayout<Compact: View, Regular: View>(
+        @ViewBuilder compact: () -> Compact,
+        @ViewBuilder regular: () -> Regular
+    ) -> some View {
+        if DeviceInfo.isCompactWidth {
+            compact()
+        } else {
+            regular()
+        }
+    }
+    
+    @ViewBuilder
+    func phoneOnly<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if DeviceInfo.isIPhone {
+            content()
+        }
+    }
+    
+    @ViewBuilder
+    func iPadOnly<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if DeviceInfo.isIPad {
+            content()
+        }
+    }
 }
 
 // MARK: - View Modifiers

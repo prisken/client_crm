@@ -1,4 +1,4 @@
-import SwiftUI
+ import SwiftUI
 import CoreData
 
 struct ClientsContentView: View {
@@ -8,25 +8,55 @@ struct ClientsContentView: View {
     let onDeleteClient: (Client) -> Void
     
     var body: some View {
-        HStack(spacing: 0) {
-            // Left Side - Clients List
-            ClientsListView(
-                viewModel: viewModel,
-                searchText: searchText,
-                selectedClient: $selectedClient,
-                onDeleteClient: onDeleteClient
-            )
-            .frame(minWidth: 400, maxWidth: 500)
-            .background(Color(.systemGray6))
-            
-            Divider()
-            
-            // Right Side - Client Details
-            if let client = selectedClient {
-                ClientDetailView(client: client)
-                    .environment(\.managedObjectContext, viewModel.context)
-            } else {
-                EmptyClientDetailView()
+        // Responsive Layout - iPhone vs iPad
+        if DeviceInfo.isIPhone {
+            // iPhone: Stack navigation
+            NavigationStack {
+                ClientsListView(
+                    viewModel: viewModel,
+                    searchText: searchText,
+                    selectedClient: $selectedClient,
+                    onDeleteClient: onDeleteClient
+                )
+                .navigationTitle("Clients")
+                .navigationBarTitleDisplayMode(.large)
+                .navigationDestination(isPresented: .constant(selectedClient != nil)) {
+                    if let client = selectedClient {
+                        ClientDetailView(client: client)
+                            .environment(\.managedObjectContext, viewModel.context)
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button("Back") {
+                                        selectedClient = nil
+                                    }
+                                }
+                            }
+                    }
+                }
+            }
+        } else {
+            // iPad: Split view (original layout)
+            HStack(spacing: 0) {
+                // Left Side - Clients List
+                ClientsListView(
+                    viewModel: viewModel,
+                    searchText: searchText,
+                    selectedClient: $selectedClient,
+                    onDeleteClient: onDeleteClient
+                )
+                .frame(minWidth: 400, maxWidth: 500)
+                .background(Color(.systemGray6))
+                
+                Divider()
+                
+                // Right Side - Client Details
+                if let client = selectedClient {
+                    ClientDetailView(client: client)
+                        .environment(\.managedObjectContext, viewModel.context)
+                } else {
+                    EmptyClientDetailView()
+                }
             }
         }
     }
