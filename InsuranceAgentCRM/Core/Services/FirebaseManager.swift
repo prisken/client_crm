@@ -354,6 +354,20 @@ class FirebaseManager: ObservableObject {
                     print("✅ Clients saved to Core Data")
                 } catch {
                     print("❌ Error saving clients: \(error.localizedDescription)")
+                    if let nsError = error as NSError? {
+                        print("❌ Detailed error info:")
+                        print("   - Domain: \(nsError.domain)")
+                        print("   - Code: \(nsError.code)")
+                        print("   - UserInfo: \(nsError.userInfo)")
+                        if let validationErrors = nsError.userInfo[NSDetailedErrorsKey] as? [NSError] {
+                            for (index, validationError) in validationErrors.enumerated() {
+                                print("   - Validation Error \(index + 1): \(validationError.localizedDescription)")
+                                print("     Entity: \(validationError.userInfo[NSValidationObjectErrorKey] ?? "Unknown")")
+                                print("     Key: \(validationError.userInfo[NSValidationKeyErrorKey] ?? "Unknown")")
+                                print("     Value: \(validationError.userInfo[NSValidationValueErrorKey] ?? "Unknown")")
+                            }
+                        }
+                    }
                 }
                 
                 // Fetch assets
@@ -401,6 +415,7 @@ class FirebaseManager: ObservableObject {
                     print("✅ Assets saved to Core Data")
                 } catch {
                     print("❌ Error saving assets: \(error.localizedDescription)")
+                    self?.logDetailedError(error)
                 }
                 
                 // Fetch expenses
@@ -448,6 +463,7 @@ class FirebaseManager: ObservableObject {
                     print("✅ Expenses saved to Core Data")
                 } catch {
                     print("❌ Error saving expenses: \(error.localizedDescription)")
+                    self?.logDetailedError(error)
                 }
                 
                 // Fetch products
@@ -495,6 +511,7 @@ class FirebaseManager: ObservableObject {
                     print("✅ Products saved to Core Data")
                 } catch {
                     print("❌ Error saving products: \(error.localizedDescription)")
+                    self?.logDetailedError(error)
                 }
                 
                 self?.fetchTasks(context: context)
@@ -541,6 +558,7 @@ class FirebaseManager: ObservableObject {
                     print("✅ Tasks saved to Core Data")
                 } catch {
                     print("❌ Error saving tasks: \(error.localizedDescription)")
+                    self?.logDetailedError(error)
                 }
                 
                 self?.finishFetch(context: context)
@@ -555,6 +573,7 @@ class FirebaseManager: ObservableObject {
             print("✅ Final context save successful")
         } catch {
             print("❌ Error in final context save: \(error.localizedDescription)")
+            logDetailedError(error)
             syncError = "Error saving data: \(error.localizedDescription)"
         }
         
@@ -565,8 +584,12 @@ class FirebaseManager: ObservableObject {
     
     // MARK: - Helper Functions for Creating/Updating Entities
     private func createOrUpdateClient(from data: [String: Any], context: NSManagedObjectContext) {
+        print("🔍 Processing client data: \(data.keys.joined(separator: ", "))")
         guard let idString = data["id"] as? String,
-              let id = UUID(uuidString: idString) else { return }
+              let id = UUID(uuidString: idString) else { 
+            print("❌ Invalid client ID in data: \(data["id"] ?? "nil")")
+            return 
+        }
         
         // Check if client already exists
         let request: NSFetchRequest<Client> = Client.fetchRequest()
@@ -592,7 +615,21 @@ class FirebaseManager: ObservableObject {
         client.email = data["email"] as? String
         client.phone = data["phone"] as? String
         client.address = data["address"] as? String
-        client.age = data["age"] as? Int16 ?? 0
+        
+        // Handle age conversion carefully
+        if let ageValue = data["age"] {
+            if let ageInt = ageValue as? Int {
+                client.age = Int16(ageInt)
+            } else if let ageString = ageValue as? String, let ageInt = Int(ageString) {
+                client.age = Int16(ageInt)
+            } else {
+                print("⚠️ Invalid age value: \(ageValue), setting to 0")
+                client.age = 0
+            }
+        } else {
+            client.age = 0
+        }
+        
         client.sex = data["sex"] as? String
         client.notes = data["notes"] as? String
         client.whatsappOptIn = data["whatsappOptIn"] as? Bool ?? false
@@ -799,5 +836,23 @@ class FirebaseManager: ObservableObject {
         }
         
         // Context will be saved in batch after all data is fetched
+    }
+    
+    // MARK: - Error Logging Helper
+    private func logDetailedError(_ error: Error) {
+        if let nsError = error as NSError? {
+            print("❌ Detailed error info:")
+            print("   - Domain: \(nsError.domain)")
+            print("   - Code: \(nsError.code)")
+            print("   - UserInfo: \(nsError.userInfo)")
+            if let validationErrors = nsError.userInfo[NSDetailedErrorsKey] as? [NSError] {
+                for (index, validationError) in validationErrors.enumerated() {
+                    print("   - Validation Error \(index + 1): \(validationError.localizedDescription)")
+                    print("     Entity: \(validationError.userInfo[NSValidationObjectErrorKey] ?? "Unknown")")
+                    print("     Key: \(validationError.userInfo[NSValidationKeyErrorKey] ?? "Unknown")")
+                    print("     Value: \(validationError.userInfo[NSValidationValueErrorKey] ?? "Unknown")")
+                }
+            }
+        }
     }
 }
