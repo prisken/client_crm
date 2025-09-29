@@ -22,7 +22,7 @@ struct BulkAddClientsView: View {
                 BulkAddHeaderView()
                 
                 // Client entries list
-                ScrollView {
+                KeyboardAwareScrollView {
                     VStack(spacing: 12) {
                         ForEach(Array(clientEntries.enumerated()), id: \.offset) { index, entry in
                             ClientEntryRow(

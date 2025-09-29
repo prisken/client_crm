@@ -342,7 +342,7 @@ struct AddTaskView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Task Details") {
                     TextField("Task Title", text: $title)
                     TextField("Notes", text: $notes, axis: .vertical)

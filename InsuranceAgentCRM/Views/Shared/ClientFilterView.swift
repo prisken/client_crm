@@ -38,25 +38,25 @@ struct ClientFilterView: View {
     @State private var showingTagSelection = false
     
     var body: some View {
-        VStack(spacing: DeviceInfo.mobileSpacing) {
-            // Filter Header
+        VStack(spacing: DeviceInfo.compactHeaderSpacing) {
+            // Filter Header - Compact
             HStack {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                     .foregroundColor(.blue)
-                    .font(.system(size: DeviceInfo.isIPhone ? 16 : 14))
+                    .font(.system(size: DeviceInfo.compactIconSize))
                 
                 Text("Filters")
-                    .font(.system(size: DeviceInfo.isIPhone ? 18 : 16, weight: .semibold))
+                    .font(.system(size: DeviceInfo.compactTitleSize, weight: .semibold))
                 
                 Spacer()
                 
-                // Active filter count badge
+                // Active filter count badge - Compact
                 if hasActiveFilters {
                     Text("\(activeFilterCount)")
-                        .font(.system(size: DeviceInfo.isIPhone ? 12 : 11, weight: .medium))
+                        .font(.system(size: DeviceInfo.compactSubtitleSize, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(.horizontal, DeviceInfo.isIPhone ? 10 : 8)
-                        .padding(.vertical, DeviceInfo.isIPhone ? 6 : 4)
+                        .padding(.horizontal, DeviceInfo.isIPhone ? 6 : 8)
+                        .padding(.vertical, DeviceInfo.isIPhone ? 3 : 4)
                         .background(Color.blue)
                         .cornerRadius(DeviceInfo.mobileCornerRadius)
                 }
@@ -67,13 +67,14 @@ struct ClientFilterView: View {
                     }
                 }) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
+                        .font(.system(size: DeviceInfo.compactIconSize))
                         .foregroundColor(.blue)
                         .animation(.easeInOut(duration: 0.2), value: isExpanded)
                 }
                 .mobileTouchTarget()
             }
-            .padding(.horizontal, DeviceInfo.mobilePadding)
+            .padding(.horizontal, DeviceInfo.compactHeaderPadding)
+            .padding(.vertical, DeviceInfo.isIPhone ? 4 : 0)
             
             // Filter Content
             if isExpanded {

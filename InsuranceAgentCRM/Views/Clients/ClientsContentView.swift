@@ -19,18 +19,7 @@ struct ClientsContentView: View {
                     onDeleteClient: onDeleteClient
                 )
                 .navigationTitle("Clients")
-                .navigationBarTitleDisplayMode(.large)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            // Add new client action
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 18, weight: .medium))
-                        }
-                        .mobileTouchTarget()
-                    }
-                }
+                .navigationBarTitleDisplayMode(DeviceInfo.isIPhone ? .inline : .large)
                 .navigationDestination(isPresented: .constant(selectedClient != nil)) {
                     if let client = selectedClient {
                         ClientDetailView(client: client)
@@ -43,7 +32,7 @@ struct ClientsContentView: View {
                                         // Edit client action
                                     }) {
                                         Image(systemName: "pencil")
-                                            .font(.system(size: 16, weight: .medium))
+                                            .font(.system(size: DeviceInfo.compactIconSize, weight: .medium))
                                     }
                                     .mobileTouchTarget()
                                 }

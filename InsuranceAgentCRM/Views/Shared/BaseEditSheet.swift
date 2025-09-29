@@ -18,7 +18,7 @@ struct BaseEditSheet<Content: View>: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 content()
             }
             .navigationTitle(title)

@@ -29,8 +29,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            .navigationTitle("Dashboard")
-            .navigationBarTitleDisplayMode(DeviceInfo.isIPhone ? .large : .inline)
+            .navigationBarTitleDisplayMode(.inline)
         }
                 .onAppear {
                     // Fetch from Firebase first, then load local data
@@ -46,7 +45,7 @@ struct DashboardView: View {
             Text("Welcome Back!")
                 .mobileTitle()
             
-            Text("Here's your daily overview")
+                        Text("Here's your daily overview")
                 .mobileCaption()
             
             // User Email Display
@@ -449,11 +448,11 @@ struct DashboardView: View {
                                 .foregroundColor(.secondary)
                             Text("No recent tasks")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
-                    } else {
+                        } else {
                         ForEach(viewModel.recentTasks.prefix(3)) { task in
                             EnhancedTaskRowView(task: task)
                         }

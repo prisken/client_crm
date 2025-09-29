@@ -21,10 +21,10 @@ struct ClientsListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Filter Section
+            // Filter Section - Compact
             ClientFilterView(filter: $clientFilter, tagManager: TagManager.shared)
-                .mobilePadding()
-                .padding(.top, DeviceInfo.isIPhone ? 8 : 12)
+                .padding(.horizontal, DeviceInfo.compactHeaderPadding)
+                .padding(.top, DeviceInfo.isIPhone ? 4 : 0)
             
             // Clients List
             if viewModel.clients.isEmpty {

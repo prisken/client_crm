@@ -18,7 +18,7 @@ struct AddProductSheet: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Product Details") {
                     TextField("Product Name", text: $name)
                     TextField("Coverage Amount", text: $amount)

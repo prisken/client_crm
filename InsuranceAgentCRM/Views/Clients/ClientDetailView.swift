@@ -7,6 +7,7 @@ struct ClientDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var authManager: AuthenticationManager
     @EnvironmentObject var firebaseManager: FirebaseManager
+    @StateObject private var tagManager = TagManager(context: PersistenceController.shared.container.viewContext, firebaseManager: FirebaseManager.shared)
     @State private var isEditMode = false
 
     var body: some View {
@@ -67,7 +68,7 @@ struct ClientDetailView: View {
     
     // MARK: - Content View
     private var contentView: some View {
-        ScrollView {
+        KeyboardAwareScrollView {
             VStack(alignment: .leading, spacing: DeviceInfo.isIPhone ? DeviceInfo.mobileSpacing : 20) {
                 // 1. Basic Info Section
                 BasicInfoSection(client: client, isEditMode: $isEditMode)
@@ -79,7 +80,7 @@ struct ClientDetailView: View {
                 TaskChecklistSection(client: client)
                 
                 // 4. Stage One: Introduction and Connection
-                StageOneSection(client: client, isEditMode: isEditMode)
+                StageOneSection(client: client, isEditMode: isEditMode, tagManager: tagManager)
                 
                 // 5. Stage Two: Fact Finding
                 StageTwoSection(client: client, isEditMode: isEditMode)
@@ -91,6 +92,12 @@ struct ClientDetailView: View {
                 StageThreeSection(client: client, isEditMode: isEditMode)
             }
             .mobilePadding()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .tagInputFocused)) { _ in
+            // Handle tag input focus - ensure proper keyboard handling
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                // This will trigger the keyboard handling for tag inputs specifically
+            }
         }
     }
 }

@@ -31,7 +31,7 @@ struct AddRelationshipSheet: View {
                 // Header
                 headerView
                 
-                ScrollView {
+                KeyboardAwareScrollView {
                     VStack(spacing: 20) {
                         // Client Selection
                         clientSelectionSection

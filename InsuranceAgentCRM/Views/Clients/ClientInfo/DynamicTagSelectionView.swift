@@ -1,11 +1,55 @@
 import SwiftUI
 import CoreData
 
+// MARK: - Add Tag Sheet
+struct AddTagSheet: View {
+    let category: TagCategory
+    @Binding var newTagText: String
+    let onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Add New \(category.rawValue) Tag")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .padding(.top)
+                
+                TextField("Enter \(category.rawValue.lowercased()) tag", text: $newTagText, axis: .vertical)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .lineLimit(3...6)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Add Tag")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(content: {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        newTagText = ""
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Add") {
+                        onSave()
+                        dismiss()
+                    }
+                    .disabled(newTagText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            })
+        }
+    }
+}
+
 // MARK: - Dynamic Tag Selection View
 struct DynamicTagSelectionView: View {
     let category: TagCategory
     @Binding var selectedTags: Set<String>
     @ObservedObject var tagManager: TagManager
+    @EnvironmentObject var authManager: AuthenticationManager
     @State private var newTagText = ""
     @State private var showingAddTag = false
     
@@ -16,7 +60,7 @@ struct DynamicTagSelectionView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 12) {
             // Category Header
             HStack {
                 Image(systemName: category.icon)
@@ -70,35 +114,40 @@ struct DynamicTagSelectionView: View {
                 emptyStateView
             }
         }
+        .onAppear {
+            // Refresh tags from Firebase when view appears
+            tagManager.refreshTags()
+        }
     }
     
     // MARK: - Add Tag Section
     private var addTagSection: some View {
         VStack(spacing: 8) {
-            HStack {
-                TextField("Add new \(category.rawValue.lowercased()) tag", text: $newTagText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .onSubmit {
-                        addNewTag()
-                    }
-                
-                Button("Add") {
+            Button(action: {
+                showingAddTag = true
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(category.color)
+                    Text("Add new \(category.rawValue.lowercased()) tag")
+                        .foregroundColor(category.color)
+                    Spacer()
+                }
+                .padding()
+                .background(category.color.opacity(0.1))
+                .cornerRadius(8)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .sheet(isPresented: $showingAddTag) {
+            AddTagSheet(
+                category: category,
+                newTagText: $newTagText,
+                onSave: {
                     addNewTag()
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(newTagText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-            
-            Button("Cancel") {
-                showingAddTag = false
-                newTagText = ""
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
+            )
         }
-        .padding()
-        .background(category.color.opacity(0.1))
-        .cornerRadius(8)
     }
     
     // MARK: - Empty State View
@@ -124,15 +173,28 @@ struct DynamicTagSelectionView: View {
     
     // MARK: - Computed Properties
     private var availableTags: [String] {
-        tagManager.getTags(for: category)
+        let tags = tagManager.getTags(for: category)
+        print("DynamicTagSelectionView: Available tags for \(category.rawValue): \(tags)")
+        return tags
     }
     
     // MARK: - Actions
     private func addNewTag() {
         let trimmedTag = newTagText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTag.isEmpty else { return }
+        guard !trimmedTag.isEmpty else { 
+            print("Error: Empty tag text")
+            return 
+        }
         
-        tagManager.addTag(trimmedTag, to: category)
+        // Get current user and pass it to addTag
+        guard let currentUser = authManager.currentUser else {
+            print("Error: No current user found")
+            return
+        }
+        
+        print("Adding tag: '\(trimmedTag)' for category: \(category.rawValue) with user: \(currentUser.email ?? "unknown")")
+        
+        tagManager.addTag(trimmedTag, to: category, owner: currentUser)
         newTagText = ""
         showingAddTag = false
     }
@@ -143,6 +205,15 @@ struct DynamicTagSelectionView: View {
         } else {
             selectedTags.insert(tag)
         }
+        
+        // Save the selection immediately to Core Data and sync to Firebase
+        saveClientData()
+    }
+    
+    private func saveClientData() {
+        // This will be implemented by the parent view
+        // For now, we'll use a notification to trigger the save
+        NotificationCenter.default.post(name: .clientDataChanged, object: nil)
     }
 }
 

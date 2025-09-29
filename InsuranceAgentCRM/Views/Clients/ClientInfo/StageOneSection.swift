@@ -7,6 +7,7 @@ struct StageOneSection: View {
     let isEditMode: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var firebaseManager: FirebaseManager
+    @ObservedObject var tagManager: TagManager
     @State private var selectedInterests: Set<String> = []
     @State private var selectedSocialStatus: Set<String> = []
     @State private var selectedLifeStage: Set<String> = []
@@ -48,6 +49,14 @@ struct StageOneSection: View {
             if let data = notification.object as? (tag: String, category: TagCategory) {
                 handleTagDeleted(tag: data.tag, category: data.category)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .clientDataChanged)) { _ in
+            // Save client data immediately when tags are selected/deselected
+            saveClientData()
+        }
+        .onAppear {
+            // Refresh tags from Firebase when this section appears
+            tagManager.refreshTags()
         }
     }
     

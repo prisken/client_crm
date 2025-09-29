@@ -266,7 +266,7 @@ struct AddProductView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Product Information") {
                     TextField("Product Code", text: $code)
                     TextField("Product Name", text: $name)
@@ -552,7 +552,7 @@ struct EditProductView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Product Information") {
                     TextField("Product Code", text: $code)
                     TextField("Product Name", text: $name)
@@ -657,7 +657,7 @@ struct QuoteBuilderView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Client Selection") {
                     Picker("Client", selection: $selectedClient) {
                         Text("Select Client").tag(nil as Client?)

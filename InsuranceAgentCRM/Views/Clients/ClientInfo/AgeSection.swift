@@ -25,6 +25,7 @@ struct AgeSection: View {
                     TextField("Enter retirement age", value: $age, format: .number)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.numberPad)
+                        .keyboardAware(extraPadding: 20)
                         .onChange(of: age) { _, newValue in
                             // Ensure age is within reasonable bounds
                             if newValue < 0 {

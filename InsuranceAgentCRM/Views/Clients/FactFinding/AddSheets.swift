@@ -17,7 +17,7 @@ struct AddAssetSheet: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Asset Details") {
                     TextField("Asset Name", text: $name)
                     Picker("Type", selection: $type) {
@@ -162,7 +162,7 @@ struct AddExpenseSheet: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Expense Details") {
                     TextField("Expense Name", text: $name)
                     Picker("Type", selection: $type) {

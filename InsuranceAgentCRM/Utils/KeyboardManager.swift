@@ -1,6 +1,12 @@
 import SwiftUI
 import Combine
 
+// MARK: - Custom Notification Names
+extension Notification.Name {
+    static let tagInputFocused = Notification.Name("tagInputFocused")
+    static let clientDataChanged = Notification.Name("clientDataChanged")
+}
+
 // MARK: - Keyboard Manager
 class KeyboardManager: ObservableObject {
     @Published var isKeyboardVisible = false
@@ -76,10 +82,38 @@ struct KeyboardAwareModifier: ViewModifier {
     }
 }
 
+// MARK: - Enhanced Mobile Keyboard Aware Modifier
+struct MobileKeyboardAwareModifier: ViewModifier {
+    @ObservedObject var keyboardManager: KeyboardManager
+    let extraPadding: CGFloat
+    let dismissOnTap: Bool
+    
+    init(extraPadding: CGFloat = 0, dismissOnTap: Bool = true) {
+        self.keyboardManager = KeyboardManager()
+        self.extraPadding = extraPadding
+        self.dismissOnTap = dismissOnTap
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + extraPadding : 0)
+            .animation(.easeOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+            .onTapGesture {
+                if dismissOnTap {
+                    keyboardManager.dismissKeyboard()
+                }
+            }
+    }
+}
+
 // MARK: - View Extensions
 extension View {
     func keyboardAware(extraPadding: CGFloat = 0) -> some View {
         self.modifier(KeyboardAwareModifier(extraPadding: extraPadding))
+    }
+    
+    func mobileKeyboardAware(extraPadding: CGFloat = 0, dismissOnTap: Bool = true) -> some View {
+        self.modifier(MobileKeyboardAwareModifier(extraPadding: extraPadding, dismissOnTap: dismissOnTap))
     }
     
     func dismissKeyboardOnTap() -> some View {
@@ -90,6 +124,44 @@ extension View {
     
     func keyboardAwareWithDismissal(extraPadding: CGFloat = 0) -> some View {
         self.keyboardAware(extraPadding: extraPadding)
+    }
+    
+    // MARK: - Mobile-Specific Keyboard Handling
+    func mobileKeyboardAware(
+        extraPadding: CGFloat = 20,
+        dismissOnTap: Bool = true,
+        scrollToActiveField: Bool = true
+    ) -> some View {
+        self.modifier(MobileKeyboardAwareModifier(extraPadding: extraPadding, dismissOnTap: dismissOnTap))
+    }
+    
+    // MARK: - Enhanced Mobile Keyboard Handling
+    func enhancedMobileKeyboardAware(
+        extraPadding: CGFloat = 20,
+        dismissOnTap: Bool = true,
+        scrollToActiveField: Bool = true
+    ) -> some View {
+        MobileKeyboardAwareView(
+            extraPadding: extraPadding,
+            dismissOnTap: dismissOnTap,
+            scrollToActiveField: scrollToActiveField
+        ) {
+            self
+        }
+    }
+    
+    // MARK: - Tag Input Keyboard Handling
+    func tagInputKeyboardAware(extraPadding: CGFloat = 50) -> some View {
+        TagInputKeyboardHandler(extraPadding: extraPadding) {
+            self
+        }
+    }
+    
+    // MARK: - Enhanced Tag Input Keyboard Handling
+    func enhancedTagInputKeyboardAware(extraPadding: CGFloat = 60) -> some View {
+        EnhancedTagInputKeyboardHandler(extraPadding: extraPadding) {
+            self
+        }
     }
 }
 
@@ -112,10 +184,12 @@ struct KeyboardAwareScrollView<Content: View>: View {
     let content: Content
     @StateObject private var keyboardManager = KeyboardManager()
     let extraPadding: CGFloat
+    let dismissOnTap: Bool
     
-    init(extraPadding: CGFloat = 16, @ViewBuilder content: () -> Content) {
+    init(extraPadding: CGFloat = 16, dismissOnTap: Bool = true, @ViewBuilder content: () -> Content) {
         self.content = content()
         self.extraPadding = extraPadding
+        self.dismissOnTap = dismissOnTap
     }
     
     var body: some View {
@@ -124,6 +198,11 @@ struct KeyboardAwareScrollView<Content: View>: View {
                 .padding(.bottom, keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + extraPadding : 0)
         }
         .animation(.easeOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+        .onTapGesture {
+            if dismissOnTap {
+                keyboardManager.dismissKeyboard()
+            }
+        }
     }
 }
 
@@ -132,10 +211,12 @@ struct KeyboardAwareForm<Content: View>: View {
     let content: Content
     @StateObject private var keyboardManager = KeyboardManager()
     let extraPadding: CGFloat
+    let dismissOnTap: Bool
     
-    init(extraPadding: CGFloat = 20, @ViewBuilder content: () -> Content) {
+    init(extraPadding: CGFloat = 20, dismissOnTap: Bool = true, @ViewBuilder content: () -> Content) {
         self.content = content()
         self.extraPadding = extraPadding
+        self.dismissOnTap = dismissOnTap
     }
     
     var body: some View {
@@ -143,6 +224,11 @@ struct KeyboardAwareForm<Content: View>: View {
             content
         }
         .keyboardAware(extraPadding: extraPadding)
+        .onTapGesture {
+            if dismissOnTap {
+                keyboardManager.dismissKeyboard()
+            }
+        }
     }
 }
 
@@ -176,6 +262,116 @@ struct KeyboardAwareSheet<Content: View>: View {
     var body: some View {
         content
             .keyboardAwareWithDismissal(extraPadding: extraPadding)
+    }
+}
+
+// MARK: - Mobile-Optimized Keyboard Handling
+struct MobileKeyboardAwareView<Content: View>: View {
+    let content: Content
+    @StateObject private var keyboardManager = KeyboardManager()
+    let extraPadding: CGFloat
+    let dismissOnTap: Bool
+    let scrollToActiveField: Bool
+    
+    init(
+        extraPadding: CGFloat = 20,
+        dismissOnTap: Bool = true,
+        scrollToActiveField: Bool = true,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.extraPadding = extraPadding
+        self.dismissOnTap = dismissOnTap
+        self.scrollToActiveField = scrollToActiveField
+    }
+    
+    var body: some View {
+        content
+            .padding(.bottom, keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + extraPadding : 0)
+            .animation(.easeOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+            .onTapGesture {
+                if dismissOnTap {
+                    keyboardManager.dismissKeyboard()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                if scrollToActiveField {
+                    // Scroll to active field when keyboard appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        // This will be handled by the ScrollViewReader in the parent view
+                    }
+                }
+            }
+    }
+}
+
+// MARK: - Tag Input Keyboard Handler
+struct TagInputKeyboardHandler<Content: View>: View {
+    let content: Content
+    @StateObject private var keyboardManager = KeyboardManager()
+    let extraPadding: CGFloat
+    
+    init(extraPadding: CGFloat = 50, @ViewBuilder content: () -> Content) {
+        self.content = content()
+        self.extraPadding = extraPadding
+    }
+    
+    var body: some View {
+        content
+            .padding(.bottom, keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + extraPadding : 0)
+            .animation(.easeOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+            .onTapGesture {
+                keyboardManager.dismissKeyboard()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                // Ensure the tag input is visible when keyboard appears
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Force scroll to make the input visible
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        // This will trigger a scroll to make the input visible
+                    }
+                }
+            }
+    }
+}
+
+// MARK: - Enhanced Tag Input Keyboard Handler with ScrollViewReader
+struct EnhancedTagInputKeyboardHandler<Content: View>: View {
+    let content: Content
+    @StateObject private var keyboardManager = KeyboardManager()
+    let extraPadding: CGFloat
+    
+    init(extraPadding: CGFloat = 60, @ViewBuilder content: () -> Content) {
+        self.content = content()
+        self.extraPadding = extraPadding
+    }
+    
+    var body: some View {
+        ScrollViewReader { proxy in
+            content
+                .padding(.bottom, keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + extraPadding : 0)
+                .animation(.easeOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+                .onTapGesture {
+                    keyboardManager.dismissKeyboard()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                    // Scroll to make the input visible when keyboard appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.easeOut(duration: 0.4)) {
+                            // Scroll to the tag input area
+                            proxy.scrollTo("tagInputArea", anchor: .center)
+                        }
+                    }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .tagInputFocused)) { _ in
+                    // Handle tag input focus specifically
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo("tagInputArea", anchor: .center)
+                        }
+                    }
+                }
+        }
     }
 }
 

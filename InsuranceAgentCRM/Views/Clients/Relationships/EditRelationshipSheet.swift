@@ -23,7 +23,7 @@ struct EditRelationshipSheet: View {
                 // Header
                 headerView
                 
-                ScrollView {
+                KeyboardAwareScrollView {
                     VStack(spacing: 20) {
                         // Relationship Type Selection
                         relationshipTypeSection

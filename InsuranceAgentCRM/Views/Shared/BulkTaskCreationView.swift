@@ -51,7 +51,8 @@ struct BulkTaskCreationView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            KeyboardAwareScrollView {
+                VStack(spacing: 0) {
                 // Compact Task Details Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Task Details")
@@ -157,7 +158,8 @@ struct BulkTaskCreationView: View {
                     .disabled(taskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedClients.isEmpty)
                 }
             }
-        }
+                }
+            }
         .onAppear {
             loadClients()
         }

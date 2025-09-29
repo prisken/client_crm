@@ -24,7 +24,7 @@ struct AddClientView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            KeyboardAwareForm {
                 Section("Personal Information") {
                     // Responsive layout for name fields
                     if DeviceInfo.isIPhone {

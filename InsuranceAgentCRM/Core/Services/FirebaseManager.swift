@@ -589,6 +589,117 @@ class FirebaseManager: ObservableObject {
         }
     }
     
+    func loadTagsFromFirebase(completion: @escaping ([String: Any]) -> Void) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            completion([:])
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            completion([:])
+            return
+        }
+        
+        // Get all universal tags for the current user
+        let tagsRef = db.collection("users").document(currentUser.uid).collection("universal_tags")
+        
+        tagsRef.getDocuments { [weak self] (querySnapshot, error) in
+            if let error = error {
+                print("❌ Error loading tags from Firebase: \(error)")
+                completion([:])
+                return
+            }
+            
+            var tagsByCategory: [String: [String: Any]] = [:]
+            
+            querySnapshot?.documents.forEach { document in
+                let data = document.data()
+                if let category = data["category"] as? String,
+                   let name = data["name"] as? String {
+                    if tagsByCategory[category] == nil {
+                        tagsByCategory[category] = [:]
+                    }
+                    tagsByCategory[category]?[document.documentID] = data
+                }
+            }
+            
+            print("📥 Loaded \(querySnapshot?.documents.count ?? 0) universal tags")
+            completion(tagsByCategory)
+        }
+    }
+    
+    // New method to sync client-specific tag selections
+    func syncClientTagSelection(clientId: String, selectedTags: [String], category: String) {
+        guard isConnected,
+              let currentUser = Auth.auth().currentUser else {
+            return
+        }
+        
+        let data: [String: Any] = [
+            "tags": selectedTags,
+            "category": category,
+            "updatedAt": Date()
+        ]
+        
+        // Save client's tag selections
+        db.collection("users")
+            .document(currentUser.uid)
+            .collection("clients")
+            .document(clientId)
+            .collection("tag_selections")
+            .document(category)
+            .setData(data) { [weak self] error in
+                if let error = error {
+                    print("❌ Error syncing client tag selection: \(error)")
+                    self?.syncError = "Failed to sync tag selection: \(error.localizedDescription)"
+                } else {
+                    print("✅ Successfully synced tag selection for client \(clientId)")
+                    self?.lastSyncDate = Date()
+                }
+            }
+    }
+    
+    // New method to load client-specific tag selections
+    func loadClientTagSelections(clientId: String, completion: @escaping ([String: [String]]) -> Void) {
+        guard isConnected,
+              let currentUser = Auth.auth().currentUser else {
+            completion([:])
+            return
+        }
+        
+        db.collection("users")
+            .document(currentUser.uid)
+            .collection("clients")
+            .document(clientId)
+            .collection("tag_selections")
+            .getDocuments { (snapshot, error) in
+                var selections: [String: [String]] = [:]
+                
+                if let error = error {
+                    print("❌ Error loading client tag selections: \(error)")
+                    completion([:])
+                    return
+                }
+                
+                snapshot?.documents.forEach { document in
+                    let data = document.data()
+                    if let category = data["category"] as? String,
+                       let tags = data["tags"] as? [String] {
+                        selections[category] = tags
+                    }
+                }
+                
+                print("📥 Loaded tag selections for client \(clientId)")
+                completion(selections)
+            }
+    }
+    
     func syncTag(_ tag: Tag) {
         guard isConnected else {
             DispatchQueue.main.async {
@@ -619,8 +730,8 @@ class FirebaseManager: ObservableObject {
             "updatedAt": tag.updatedAt ?? Date()
         ]
         
-        // Save tag to Firebase
-        db.collection("users").document(currentUser.uid).collection("tags").document(tagId).setData(data) { [weak self] error in
+        // Save tag to Firebase under universal_tags
+        db.collection("users").document(currentUser.uid).collection("universal_tags").document(tagId).setData(data) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync tag: \(error.localizedDescription)"
@@ -1550,6 +1661,81 @@ class FirebaseManager: ObservableObject {
                     print("     Key: \(validationError.userInfo[NSValidationKeyErrorKey] ?? "Unknown")")
                     print("     Value: \(validationError.userInfo[NSValidationValueErrorKey] ?? "Unknown")")
                 }
+            }
+        }
+    }
+    
+    // MARK: - Data Migration
+    func migrateTagsToNewStructure(completion: @escaping (Bool) -> Void) {
+        guard isConnected,
+              let currentUser = Auth.auth().currentUser else {
+            completion(false)
+            return
+        }
+        
+        print("🔄 Starting tag migration to new structure...")
+        
+        // Step 1: Get all existing tags from old structure
+        let oldTagsRef = db.collection("users").document(currentUser.uid).collection("tags")
+        
+        oldTagsRef.getDocuments { [weak self] (snapshot, error) in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Error fetching old tags: \(error)")
+                completion(false)
+                return
+            }
+            
+            guard let documents = snapshot?.documents else {
+                print("ℹ️ No tags to migrate")
+                completion(true)
+                return
+            }
+            
+            print("📥 Found \(documents.count) tags to migrate")
+            
+            let dispatchGroup = DispatchGroup()
+            var migrationSuccess = true
+            
+            // Step 2: Migrate each tag to universal_tags
+            for document in documents {
+                dispatchGroup.enter()
+                
+                let data = document.data()
+                let tagId = document.documentID
+                
+                // Save to new universal_tags collection
+                self.db.collection("users")
+                    .document(currentUser.uid)
+                    .collection("universal_tags")
+                    .document(tagId)
+                    .setData(data) { error in
+                        if let error = error {
+                            print("❌ Error migrating tag \(tagId): \(error)")
+                            migrationSuccess = false
+                        } else {
+                            print("✅ Successfully migrated tag \(tagId)")
+                            
+                            // Delete from old location
+                            self.db.collection("users")
+                                .document(currentUser.uid)
+                                .collection("tags")
+                                .document(tagId)
+                                .delete { error in
+                                    if let error = error {
+                                        print("⚠️ Warning: Could not delete old tag \(tagId): \(error)")
+                                    }
+                                }
+                        }
+                        dispatchGroup.leave()
+                    }
+            }
+            
+            // Step 3: Wait for all operations to complete
+            dispatchGroup.notify(queue: .main) {
+                print(migrationSuccess ? "✅ Tag migration completed successfully" : "❌ Tag migration completed with errors")
+                completion(migrationSuccess)
             }
         }
     }
