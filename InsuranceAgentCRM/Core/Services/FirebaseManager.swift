@@ -530,24 +530,31 @@ class FirebaseManager: ObservableObject {
             return
         }
         
-        guard let clientAId = relationship.clientA.id?.uuidString,
-              let clientBId = relationship.clientB.id?.uuidString else {
+        guard let clientA = relationship.clientA,
+              let clientB = relationship.clientB,
+              let clientAId = clientA.id?.uuidString,
+              let clientBId = clientB.id?.uuidString else {
             DispatchQueue.main.async {
                 self.syncError = "Relationship or Client ID not found"
             }
             return
         }
         
-        let relationshipId = relationship.id.uuidString
+        guard let relationshipId = relationship.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Relationship ID not found"
+            }
+            return
+        }
         
         let data: [String: Any] = [
             "id": relationshipId,
             "clientAId": clientAId,
             "clientBId": clientBId,
-            "relationshipType": relationship.relationshipType.rawValue,
+            "relationshipType": relationship.relationshipType ?? "",
             "notes": relationship.notes ?? "",
-            "createdAt": relationship.createdAt,
-            "updatedAt": relationship.updatedAt
+            "createdAt": relationship.createdAt ?? Date(),
+            "updatedAt": relationship.updatedAt ?? Date()
         ]
         
         // Save relationship to Firebase
@@ -555,6 +562,116 @@ class FirebaseManager: ObservableObject {
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync relationship: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func syncTag(_ tag: Tag) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let tagId = tag.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Tag ID not found"
+            }
+            return
+        }
+        
+        let data: [String: Any] = [
+            "id": tagId,
+            "name": tag.name ?? "",
+            "category": tag.category ?? "",
+            "createdAt": tag.createdAt ?? Date(),
+            "updatedAt": tag.updatedAt ?? Date()
+        ]
+        
+        // Save tag to Firebase
+        db.collection("users").document(currentUser.uid).collection("tags").document(tagId).setData(data) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to sync tag: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func deleteTag(_ tag: Tag) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let tagId = tag.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Tag ID not found"
+            }
+            return
+        }
+        
+        // Delete tag from Firebase
+        db.collection("users").document(currentUser.uid).collection("tags").document(tagId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete tag from Firebase: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func deleteRelationship(_ relationship: ClientRelationship) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let relationshipId = relationship.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Relationship ID not found"
+            }
+            return
+        }
+        
+        // Delete relationship from Firebase
+        db.collection("users").document(currentUser.uid).collection("relationships").document(relationshipId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete relationship from Firebase: \(error.localizedDescription)"
                 } else {
                     self?.lastSyncDate = Date()
                 }

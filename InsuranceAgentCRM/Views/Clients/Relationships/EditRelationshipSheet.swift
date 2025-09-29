@@ -3,14 +3,14 @@ import CoreData
 
 // MARK: - Edit Relationship Sheet
 struct EditRelationshipSheet: View {
-    let relationship: ClientRelationship
+    let relationship: ClientRelationshipModel
     let relationshipManager: RelationshipManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedRelationshipType: RelationshipOptions.RelationshipType
     @State private var notes: String
     
-    init(relationship: ClientRelationship, relationshipManager: RelationshipManager) {
+    init(relationship: ClientRelationshipModel, relationshipManager: RelationshipManager) {
         self.relationship = relationship
         self.relationshipManager = relationshipManager
         self._selectedRelationshipType = State(initialValue: relationship.relationshipType)

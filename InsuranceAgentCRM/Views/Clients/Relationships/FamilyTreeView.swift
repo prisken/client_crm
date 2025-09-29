@@ -234,7 +234,7 @@ struct FamilyTreeView_Previews: PreviewProvider {
     static var previews: some View {
         FamilyTreeView(
             client: Client(), // Mock client
-            relationshipManager: RelationshipManager(context: PersistenceController.shared.container.viewContext)
+            relationshipManager: RelationshipManager(context: PersistenceController.shared.container.viewContext, firebaseManager: FirebaseManager.shared)
         )
     }
 }

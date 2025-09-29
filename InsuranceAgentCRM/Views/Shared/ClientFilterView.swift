@@ -511,6 +511,6 @@ struct CompactTagChip: View {
 #Preview {
     ClientFilterView(
         filter: .constant(ClientFilter()),
-        tagManager: TagManager(context: PersistenceController.preview.container.viewContext)
+        tagManager: TagManager(context: PersistenceController.preview.container.viewContext, firebaseManager: FirebaseManager.shared)
     )
 }

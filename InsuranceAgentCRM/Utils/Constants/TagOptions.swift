@@ -170,6 +170,7 @@ struct RelationshipOptions {
         
         var id: String { self.rawValue }
         
+        // MARK: - Icon
         // MARK: - Bidirectional Mapping
         var inverseRelationship: RelationshipType {
             switch self {

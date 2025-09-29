@@ -15,7 +15,7 @@ struct RelationshipSection: View {
     init(client: Client, isEditMode: Bool) {
         self.client = client
         self.isEditMode = isEditMode
-        self._relationshipManager = StateObject(wrappedValue: RelationshipManager(context: PersistenceController.shared.container.viewContext))
+        self._relationshipManager = StateObject(wrappedValue: RelationshipManager(context: PersistenceController.shared.container.viewContext, firebaseManager: FirebaseManager.shared))
     }
     
     var body: some View {
@@ -155,7 +155,7 @@ struct RelationshipSection: View {
 
 // MARK: - Relationship Row View
 struct RelationshipRowView: View {
-    let relationship: ClientRelationship
+    let relationship: ClientRelationshipModel
     let isEditMode: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void

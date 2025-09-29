@@ -14,30 +14,67 @@ class TagManager: ObservableObject {
     @Published var lifeStageTags: [String] = []
     
     private let context: NSManagedObjectContext
+    private let firebaseManager: FirebaseManager
     
     // Singleton instance
-    static let shared = TagManager(context: PersistenceController.shared.container.viewContext)
+    static let shared = TagManager(context: PersistenceController.shared.container.viewContext, firebaseManager: FirebaseManager.shared)
     
-    init(context: NSManagedObjectContext) {
+    init(context: NSManagedObjectContext, firebaseManager: FirebaseManager) {
         self.context = context
+        self.firebaseManager = firebaseManager
         loadTags()
     }
     
     // MARK: - Load Tags
     private func loadTags() {
-        // Load from UserDefaults for now (in a real app, you might want to store in Core Data)
-        interestTags = UserDefaults.standard.stringArray(forKey: "interestTags") ?? []
-        socialStatusTags = UserDefaults.standard.stringArray(forKey: "socialStatusTags") ?? []
-        lifeStageTags = UserDefaults.standard.stringArray(forKey: "lifeStageTags") ?? []
+        // Load from Core Data instead of UserDefaults
+        loadTagsFromCoreData()
+    }
+    
+    private func loadTagsFromCoreData() {
+        let request: NSFetchRequest<Tag> = Tag.fetchRequest()
+        request.predicate = NSPredicate(format: "category == %@", "interest")
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Tag.name, ascending: true)]
         
+        do {
+            let tags = try context.fetch(request)
+            interestTags = tags.compactMap { $0.name }
+        } catch {
+            print("Error loading interest tags: \(error)")
+        }
+        
+        let socialRequest: NSFetchRequest<Tag> = Tag.fetchRequest()
+        socialRequest.predicate = NSPredicate(format: "category == %@", "socialStatus")
+        socialRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Tag.name, ascending: true)]
+        
+        do {
+            let tags = try context.fetch(socialRequest)
+            socialStatusTags = tags.compactMap { $0.name }
+        } catch {
+            print("Error loading social status tags: \(error)")
+        }
+        
+        let lifeStageRequest: NSFetchRequest<Tag> = Tag.fetchRequest()
+        lifeStageRequest.predicate = NSPredicate(format: "category == %@", "lifeStage")
+        lifeStageRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Tag.name, ascending: true)]
+        
+        do {
+            let tags = try context.fetch(lifeStageRequest)
+            lifeStageTags = tags.compactMap { $0.name }
+        } catch {
+            print("Error loading life stage tags: \(error)")
+        }
     }
     
     // MARK: - Save Tags
     private func saveTags() {
-        UserDefaults.standard.set(interestTags, forKey: "interestTags")
-        UserDefaults.standard.set(socialStatusTags, forKey: "socialStatusTags")
-        UserDefaults.standard.set(lifeStageTags, forKey: "lifeStageTags")
-        
+        // Save to Core Data and Firebase instead of UserDefaults
+        saveTagsToCoreData()
+    }
+    
+    private func saveTagsToCoreData() {
+        // This method will be called when tags are added/removed
+        // The actual Core Data operations are handled in addTag/removeTag methods
     }
     
     // MARK: - Add Tag
@@ -45,47 +82,78 @@ class TagManager: ObservableObject {
         let trimmedTag = tag.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTag.isEmpty else { return }
         
+        // Check if tag already exists in Core Data
+        let request: NSFetchRequest<Tag> = Tag.fetchRequest()
+        request.predicate = NSPredicate(format: "name == %@ AND category == %@", trimmedTag, category.rawValue)
         
-        switch category {
-        case .interest:
-            if !interestTags.contains(trimmedTag) {
-                interestTags.append(trimmedTag)
+        do {
+            let existingTags = try context.fetch(request)
+            if !existingTags.isEmpty {
+                return // Tag already exists
             }
-        case .socialStatus:
-            if !socialStatusTags.contains(trimmedTag) {
-                socialStatusTags.append(trimmedTag)
+            
+            // Create new tag in Core Data
+            let newTag = Tag(context: context)
+            newTag.id = UUID()
+            newTag.name = trimmedTag
+            newTag.category = category.rawValue
+            newTag.createdAt = Date()
+            newTag.updatedAt = Date()
+            
+            // Set owner (you'll need to get current user)
+            // newTag.owner = currentUser
+            
+            try context.save()
+            
+            // Sync to Firebase
+            DispatchQueue.main.async {
+                self.firebaseManager.syncTag(newTag)
             }
-        case .lifeStage:
-            if !lifeStageTags.contains(trimmedTag) {
-                lifeStageTags.append(trimmedTag)
-            }
+            
+            // Update local arrays
+            loadTagsFromCoreData()
+            objectWillChange.send()
+            
+        } catch {
+            print("Error adding tag: \(error)")
         }
-        
-        saveTags()
-        objectWillChange.send()
     }
     
     // MARK: - Delete Tag
     func deleteTag(_ tag: String, from category: TagCategory) {
-        switch category {
-        case .interest:
-            interestTags.removeAll { $0 == tag }
-        case .socialStatus:
-            socialStatusTags.removeAll { $0 == tag }
-        case .lifeStage:
-            lifeStageTags.removeAll { $0 == tag }
+        // Find and delete tag from Core Data
+        let request: NSFetchRequest<Tag> = Tag.fetchRequest()
+        request.predicate = NSPredicate(format: "name == %@ AND category == %@", tag, category.rawValue)
+        
+        do {
+            let tags = try context.fetch(request)
+            for tagEntity in tags {
+                // Sync deletion to Firebase
+                DispatchQueue.main.async {
+                    self.firebaseManager.deleteTag(tagEntity)
+                }
+                
+                // Delete from Core Data
+                context.delete(tagEntity)
+            }
+            
+            try context.save()
+            
+            // Remove this tag from all clients
+            removeTagFromAllClients(tag, category: category)
+            
+            // Update local arrays
+            loadTagsFromCoreData()
+            
+            // Notify that tags have been updated
+            objectWillChange.send()
+            
+            // Post notification for UI updates
+            NotificationCenter.default.post(name: .tagDeleted, object: (tag: tag, category: category))
+            
+        } catch {
+            print("Error deleting tag: \(error)")
         }
-        
-        saveTags()
-        
-        // Remove this tag from all clients
-        removeTagFromAllClients(tag, category: category)
-        
-        // Notify that tags have been updated
-        objectWillChange.send()
-        
-        // Post notification for UI updates
-        NotificationCenter.default.post(name: .tagDeleted, object: (tag: tag, category: category))
     }
     
     // MARK: - Remove Tag from All Clients

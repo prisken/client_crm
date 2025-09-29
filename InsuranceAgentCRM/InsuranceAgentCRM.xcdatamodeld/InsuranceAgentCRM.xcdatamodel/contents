@@ -41,6 +41,8 @@
         <relationship name="assets" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Asset" inverseName="client" inverseEntity="Asset"/>
         <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Expense" inverseName="client" inverseEntity="Expense"/>
         <relationship name="products" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientProduct" inverseName="client" inverseEntity="ClientProduct"/>
+        <relationship name="relationshipsAsA" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientRelationship" inverseName="clientA" inverseEntity="ClientRelationship"/>
+        <relationship name="relationshipsAsB" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientRelationship" inverseName="clientB" inverseEntity="ClientRelationship"/>
     </entity>
     <entity name="CommissionTarget" representedClassName="CommissionTarget" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
@@ -126,6 +128,8 @@
         <relationship name="auditLogs" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AuditLog" inverseName="user" inverseEntity="AuditLog"/>
         <relationship name="clients" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Client" inverseName="owner" inverseEntity="Client"/>
         <relationship name="commissionTargets" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CommissionTarget" inverseName="user" inverseEntity="CommissionTarget"/>
+        <relationship name="relationships" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientRelationship" inverseName="owner" inverseEntity="ClientRelationship"/>
+        <relationship name="tags" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Tag" inverseName="owner" inverseEntity="Tag"/>
     </entity>
     <entity name="WhatsAppMessage" representedClassName="WhatsAppMessage" syncable="YES" codeGenerationType="class">
         <attribute name="content" optional="NO" attributeType="String"/>
@@ -188,6 +192,25 @@
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="client" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="Client" inverseName="products" inverseEntity="Client"/>
+    </entity>
+    <entity name="ClientRelationship" representedClassName="ClientRelationship" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="relationshipType" optional="NO" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="isActive" optional="NO" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="clientA" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="Client" inverseName="relationshipsAsA" inverseEntity="Client"/>
+        <relationship name="clientB" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="Client" inverseName="relationshipsAsB" inverseEntity="Client"/>
+        <relationship name="owner" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="relationships" inverseEntity="User"/>
+    </entity>
+    <entity name="Tag" representedClassName="Tag" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="category" optional="NO" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="owner" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="tags" inverseEntity="User"/>
     </entity>
 </model>
 
