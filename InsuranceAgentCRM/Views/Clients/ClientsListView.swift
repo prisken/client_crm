@@ -10,6 +10,7 @@ struct ClientsListView: View {
     @State private var clientToDelete: Client?
     @State private var clientFilter = ClientFilter()
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     
     init(viewModel: ClientsViewModel, searchText: String, selectedClient: Binding<Client?>, onDeleteClient: @escaping (Client) -> Void) {
         self.viewModel = viewModel
@@ -120,6 +121,10 @@ struct ClientsListView: View {
         guard let client = clientToDelete else { return }
         
         withAnimation {
+            // Delete from Firebase first
+            firebaseManager.deleteClient(client)
+            
+            // Then delete from Core Data
             viewContext.delete(client)
             
             do {

@@ -5,6 +5,7 @@ import CoreData
 struct TaskChecklistSection: View {
     let client: Client
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var firebaseManager: FirebaseManager
     @State private var newTaskTitle = ""
     @State private var showingAddTask = false
     @State private var collapsedTasks: Set<UUID> = []
@@ -107,6 +108,9 @@ struct TaskChecklistSection: View {
         logInfo("Deleting task: \(task.title ?? "") for client: \(client.firstName ?? "") \(client.lastName ?? "")")
         
         taskToDelete = nil
+        
+        // Delete from Firebase first
+        firebaseManager.deleteTask(task)
         
         withAnimation {
             viewContext.delete(task)

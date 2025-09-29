@@ -98,11 +98,13 @@ struct StageThreeSection: View {
     }
     
     private func deleteProduct(_ product: ClientProduct) {
+        // Delete from Firebase first
+        firebaseManager.deleteProduct(product)
+        
+        // Then delete from Core Data
         viewContext.delete(product)
         do {
             try viewContext.save()
-            // Sync client to Firebase after product deletion
-            firebaseManager.syncClient(client)
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting product: \(error)")

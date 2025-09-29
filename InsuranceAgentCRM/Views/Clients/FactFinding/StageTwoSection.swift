@@ -135,11 +135,13 @@ struct StageTwoSection: View {
     }
     
     private func deleteAsset(_ asset: Asset) {
+        // Delete from Firebase first
+        firebaseManager.deleteAsset(asset)
+        
+        // Then delete from Core Data
         viewContext.delete(asset)
         do {
             try viewContext.save()
-            // Sync client to Firebase after asset deletion
-            firebaseManager.syncClient(client)
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting asset: \(error)")
@@ -147,11 +149,13 @@ struct StageTwoSection: View {
     }
     
     private func deleteExpense(_ expense: Expense) {
+        // Delete from Firebase first
+        firebaseManager.deleteExpense(expense)
+        
+        // Then delete from Core Data
         viewContext.delete(expense)
         do {
             try viewContext.save()
-            // Sync client to Firebase after expense deletion
-            firebaseManager.syncClient(client)
             viewModel.loadData(client: client, context: viewContext)
         } catch {
             print("Error deleting expense: \(error)")

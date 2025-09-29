@@ -301,6 +301,177 @@ class FirebaseManager: ObservableObject {
         }
     }
     
+    // MARK: - Delete Data from Firebase
+    func deleteClient(_ client: Client) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let clientId = client.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Client ID not found"
+            }
+            return
+        }
+        
+        // Delete client from Firebase
+        db.collection("users").document(currentUser.uid).collection("clients").document(clientId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete client from Firebase: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func deleteAsset(_ asset: Asset) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let assetId = asset.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Asset ID not found"
+            }
+            return
+        }
+        
+        // Delete asset from Firebase
+        db.collection("users").document(currentUser.uid).collection("assets").document(assetId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete asset from Firebase: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func deleteExpense(_ expense: Expense) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let expenseId = expense.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Expense ID not found"
+            }
+            return
+        }
+        
+        // Delete expense from Firebase
+        db.collection("users").document(currentUser.uid).collection("expenses").document(expenseId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete expense from Firebase: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func deleteProduct(_ product: ClientProduct) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let productId = product.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Product ID not found"
+            }
+            return
+        }
+        
+        // Delete product from Firebase
+        db.collection("users").document(currentUser.uid).collection("products").document(productId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete product from Firebase: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func deleteTask(_ task: ClientTask) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let taskId = task.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Task ID not found"
+            }
+            return
+        }
+        
+        // Delete task from Firebase
+        db.collection("users").document(currentUser.uid).collection("tasks").document(taskId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to delete task from Firebase: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
     // MARK: - Fetch Data from Firebase
     func fetchAllData(context: NSManagedObjectContext) {
         guard isConnected else {

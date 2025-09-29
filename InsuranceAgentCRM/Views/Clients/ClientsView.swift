@@ -79,6 +79,10 @@ struct ClientsView: View {
     // MARK: - Private Methods
     private func deleteClient(_ client: Client) {
         withAnimation {
+            // Delete from Firebase first
+            firebaseManager.deleteClient(client)
+            
+            // Then delete from Core Data
             viewContext.delete(client)
             
             do {
