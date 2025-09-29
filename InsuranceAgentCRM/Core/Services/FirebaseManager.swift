@@ -740,15 +740,23 @@ class FirebaseManager: ObservableObject {
                 
                 guard let documents = snapshot?.documents else {
                     print("ℹ️ No client documents found")
-                    self?.fetchAssets(context: context)
+                    self?.finishFetch(context: context)
                     return
                 }
                 
                 print("📥 Found \(documents.count) client documents")
                 
+                // Store client IDs for fetching their associated data
+                var clientIds: [String] = []
+                
                 for document in documents {
                     let data = document.data()
                     self?.createOrUpdateClient(from: data, context: context)
+                    
+                    // Collect client IDs for fetching associated data
+                    if let clientId = data["id"] as? String {
+                        clientIds.append(clientId)
+                    }
                 }
                 
                 // Save context after clients
@@ -773,8 +781,229 @@ class FirebaseManager: ObservableObject {
                     }
                 }
                 
-                // Fetch assets
-                self?.fetchAssets(context: context)
+                // Fetch associated data for each client
+                if !clientIds.isEmpty {
+                    self?.fetchClientAssociatedData(clientIds: clientIds, context: context)
+                } else {
+                    self?.finishFetch(context: context)
+                }
+            }
+        }
+    }
+    
+    private func fetchClientAssociatedData(clientIds: [String], context: NSManagedObjectContext) {
+        print("🔄 Fetching associated data for \(clientIds.count) clients")
+        
+        let dispatchGroup = DispatchGroup()
+        var hasErrors = false
+        
+        // Fetch assets for all clients
+        for clientId in clientIds {
+            dispatchGroup.enter()
+            fetchAssetsForClient(clientId: clientId, context: context) { [weak self] success in
+                if !success { hasErrors = true }
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Fetch expenses for all clients
+        for clientId in clientIds {
+            dispatchGroup.enter()
+            fetchExpensesForClient(clientId: clientId, context: context) { [weak self] success in
+                if !success { hasErrors = true }
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Fetch products for all clients
+        for clientId in clientIds {
+            dispatchGroup.enter()
+            fetchProductsForClient(clientId: clientId, context: context) { [weak self] success in
+                if !success { hasErrors = true }
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Fetch tasks for all clients
+        for clientId in clientIds {
+            dispatchGroup.enter()
+            fetchTasksForClient(clientId: clientId, context: context) { [weak self] success in
+                if !success { hasErrors = true }
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Wait for all fetches to complete
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            if hasErrors {
+                print("⚠️ Some data fetch operations failed")
+            } else {
+                print("✅ All client associated data fetched successfully")
+            }
+            self?.finishFetch(context: context)
+        }
+    }
+    
+    private func fetchAssetsForClient(clientId: String, context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("assets").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching assets for client \(clientId): \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No asset documents found for client \(clientId)")
+                    completion(true)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) asset documents for client \(clientId)")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateAsset(from: data, context: context)
+                }
+                
+                // Save context after assets
+                do {
+                    try context.save()
+                    print("✅ Assets saved to Core Data for client \(clientId)")
+                } catch {
+                    print("❌ Error saving assets for client \(clientId): \(error)")
+                    self?.logDetailedError(error)
+                }
+                
+                completion(true)
+            }
+        }
+    }
+    
+    private func fetchExpensesForClient(clientId: String, context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("expenses").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching expenses for client \(clientId): \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No expense documents found for client \(clientId)")
+                    completion(true)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) expense documents for client \(clientId)")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateExpense(from: data, context: context)
+                }
+                
+                // Save context after expenses
+                do {
+                    try context.save()
+                    print("✅ Expenses saved to Core Data for client \(clientId)")
+                } catch {
+                    print("❌ Error saving expenses for client \(clientId): \(error)")
+                    self?.logDetailedError(error)
+                }
+                
+                completion(true)
+            }
+        }
+    }
+    
+    private func fetchProductsForClient(clientId: String, context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("products").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching products for client \(clientId): \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No product documents found for client \(clientId)")
+                    completion(true)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) product documents for client \(clientId)")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateProduct(from: data, context: context)
+                }
+                
+                // Save context after products
+                do {
+                    try context.save()
+                    print("✅ Products saved to Core Data for client \(clientId)")
+                } catch {
+                    print("❌ Error saving products for client \(clientId): \(error)")
+                    self?.logDetailedError(error)
+                }
+                
+                completion(true)
+            }
+        }
+    }
+    
+    private func fetchTasksForClient(clientId: String, context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("tasks").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching tasks for client \(clientId): \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No task documents found for client \(clientId)")
+                    completion(true)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) task documents for client \(clientId)")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateTask(from: data, context: context)
+                }
+                
+                // Save context after tasks
+                do {
+                    try context.save()
+                    print("✅ Tasks saved to Core Data for client \(clientId)")
+                } catch {
+                    print("❌ Error saving tasks for client \(clientId): \(error)")
+                    self?.logDetailedError(error)
+                }
+                
+                completion(true)
             }
         }
     }
@@ -1306,172 +1535,6 @@ class FirebaseManager: ObservableObject {
         // Context will be saved in batch after all data is fetched
     }
     
-    private func createOrUpdateAsset(from data: [String: Any], context: NSManagedObjectContext) {
-        guard let idString = data["id"] as? String,
-              let id = UUID(uuidString: idString) else { return }
-        
-        let request: NSFetchRequest<Asset> = Asset.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        
-        let asset: Asset
-        do {
-            let existingAssets = try context.fetch(request)
-            if let existingAsset = existingAssets.first {
-                asset = existingAsset
-            } else {
-                asset = Asset(context: context)
-                asset.id = id
-            }
-        } catch {
-            asset = Asset(context: context)
-            asset.id = id
-        }
-        
-        asset.name = data["name"] as? String
-        asset.type = data["type"] as? String
-        asset.amount = NSDecimalNumber(value: data["amount"] as? Double ?? 0)
-        asset.assetDescription = data["description"] as? String
-        asset.createdAt = data["createdAt"] as? Date ?? Date()
-        asset.updatedAt = data["updatedAt"] as? Date ?? Date()
-        
-        // Link to client if clientId exists
-        if let clientIdString = data["clientId"] as? String,
-           let clientId = UUID(uuidString: clientIdString) {
-            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
-            clientRequest.predicate = NSPredicate(format: "id == %@", clientId as CVarArg)
-            if let client = try? context.fetch(clientRequest).first {
-                asset.client = client
-            }
-        }
-        
-        // Context will be saved in batch after all data is fetched
-    }
-    
-    private func createOrUpdateExpense(from data: [String: Any], context: NSManagedObjectContext) {
-        guard let idString = data["id"] as? String,
-              let id = UUID(uuidString: idString) else { return }
-        
-        let request: NSFetchRequest<Expense> = Expense.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        
-        let expense: Expense
-        do {
-            let existingExpenses = try context.fetch(request)
-            if let existingExpense = existingExpenses.first {
-                expense = existingExpense
-            } else {
-                expense = Expense(context: context)
-                expense.id = id
-            }
-        } catch {
-            expense = Expense(context: context)
-            expense.id = id
-        }
-        
-        expense.name = data["name"] as? String
-        expense.type = data["type"] as? String
-        expense.amount = NSDecimalNumber(value: data["amount"] as? Double ?? 0)
-        expense.frequency = data["frequency"] as? String
-        expense.assetDescription = data["description"] as? String
-        expense.createdAt = data["createdAt"] as? Date ?? Date()
-        expense.updatedAt = data["updatedAt"] as? Date ?? Date()
-        
-        // Link to client if clientId exists
-        if let clientIdString = data["clientId"] as? String,
-           let clientId = UUID(uuidString: clientIdString) {
-            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
-            clientRequest.predicate = NSPredicate(format: "id == %@", clientId as CVarArg)
-            if let client = try? context.fetch(clientRequest).first {
-                expense.client = client
-            }
-        }
-        
-        // Context will be saved in batch after all data is fetched
-    }
-    
-    private func createOrUpdateProduct(from data: [String: Any], context: NSManagedObjectContext) {
-        guard let idString = data["id"] as? String,
-              let id = UUID(uuidString: idString) else { return }
-        
-        let request: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        
-        let product: ClientProduct
-        do {
-            let existingProducts = try context.fetch(request)
-            if let existingProduct = existingProducts.first {
-                product = existingProduct
-            } else {
-                product = ClientProduct(context: context)
-                product.id = id
-            }
-        } catch {
-            product = ClientProduct(context: context)
-            product.id = id
-        }
-        
-        product.name = data["name"] as? String
-        product.category = data["category"] as? String
-        product.amount = NSDecimalNumber(value: data["amount"] as? Double ?? 0)
-        product.premium = NSDecimalNumber(value: data["premium"] as? Double ?? 0)
-        product.coverage = data["coverage"] as? String
-        product.status = data["status"] as? String
-        product.assetDescription = data["description"] as? String
-        product.createdAt = data["createdAt"] as? Date ?? Date()
-        product.updatedAt = data["updatedAt"] as? Date ?? Date()
-        
-        // Link to client if clientId exists
-        if let clientIdString = data["clientId"] as? String,
-           let clientId = UUID(uuidString: clientIdString) {
-            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
-            clientRequest.predicate = NSPredicate(format: "id == %@", clientId as CVarArg)
-            if let client = try? context.fetch(clientRequest).first {
-                product.client = client
-            }
-        }
-        
-        // Context will be saved in batch after all data is fetched
-    }
-    
-    private func createOrUpdateTask(from data: [String: Any], context: NSManagedObjectContext) {
-        guard let idString = data["id"] as? String,
-              let id = UUID(uuidString: idString) else { return }
-        
-        let request: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        
-        let task: ClientTask
-        do {
-            let existingTasks = try context.fetch(request)
-            if let existingTask = existingTasks.first {
-                task = existingTask
-            } else {
-                task = ClientTask(context: context)
-                task.id = id
-            }
-        } catch {
-            task = ClientTask(context: context)
-            task.id = id
-        }
-        
-        task.title = data["title"] as? String
-        task.notes = data["notes"] as? String
-        task.isCompleted = data["isCompleted"] as? Bool ?? false
-        task.createdAt = data["createdAt"] as? Date ?? Date()
-        task.updatedAt = data["updatedAt"] as? Date ?? Date()
-        
-        // Link to client if clientId exists
-        if let clientIdString = data["clientId"] as? String,
-           let clientId = UUID(uuidString: clientIdString) {
-            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
-            clientRequest.predicate = NSPredicate(format: "id == %@", clientId as CVarArg)
-            if let client = try? context.fetch(clientRequest).first {
-                task.client = client
-            }
-        }
-        
-        // Context will be saved in batch after all data is fetched
-    }
     
     // MARK: - Error Logging Helper
     private func logDetailedError(_ error: Error) {
@@ -1488,6 +1551,158 @@ class FirebaseManager: ObservableObject {
                     print("     Value: \(validationError.userInfo[NSValidationValueErrorKey] ?? "Unknown")")
                 }
             }
+        }
+    }
+    
+    // MARK: - Create or Update Functions for Client-Specific Data
+    private func createOrUpdateAsset(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let assetId = data["id"] as? String,
+              let clientId = data["clientId"] as? String else {
+            print("❌ Missing asset ID or client ID")
+            return
+        }
+        
+        // Find existing asset or create new one
+        let request: NSFetchRequest<Asset> = Asset.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: assetId) ?? UUID()) as CVarArg)
+        
+        do {
+            let existingAssets = try context.fetch(request)
+            let asset = existingAssets.first ?? Asset(context: context)
+            
+            // Set properties
+            asset.id = UUID(uuidString: assetId)
+            asset.name = data["name"] as? String
+            asset.type = data["type"] as? String
+            asset.amount = NSDecimalNumber(value: data["amount"] as? Double ?? 0)
+            asset.assetDescription = data["description"] as? String
+            asset.createdAt = data["createdAt"] as? Date ?? Date()
+            asset.updatedAt = data["updatedAt"] as? Date ?? Date()
+            
+            // Find and set client relationship
+            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+            clientRequest.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: clientId) ?? UUID()) as CVarArg)
+            let clients = try context.fetch(clientRequest)
+            if let client = clients.first {
+                asset.client = client
+            }
+            
+        } catch {
+            print("❌ Error creating/updating asset: \(error)")
+        }
+    }
+    
+    private func createOrUpdateExpense(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let expenseId = data["id"] as? String,
+              let clientId = data["clientId"] as? String else {
+            print("❌ Missing expense ID or client ID")
+            return
+        }
+        
+        // Find existing expense or create new one
+        let request: NSFetchRequest<Expense> = Expense.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: expenseId) ?? UUID()) as CVarArg)
+        
+        do {
+            let existingExpenses = try context.fetch(request)
+            let expense = existingExpenses.first ?? Expense(context: context)
+            
+            // Set properties
+            expense.id = UUID(uuidString: expenseId)
+            expense.name = data["name"] as? String
+            expense.type = data["type"] as? String
+            expense.amount = NSDecimalNumber(value: data["amount"] as? Double ?? 0)
+            expense.frequency = data["frequency"] as? String
+            expense.assetDescription = data["description"] as? String
+            expense.createdAt = data["createdAt"] as? Date ?? Date()
+            expense.updatedAt = data["updatedAt"] as? Date ?? Date()
+            
+            // Find and set client relationship
+            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+            clientRequest.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: clientId) ?? UUID()) as CVarArg)
+            let clients = try context.fetch(clientRequest)
+            if let client = clients.first {
+                expense.client = client
+            }
+            
+        } catch {
+            print("❌ Error creating/updating expense: \(error)")
+        }
+    }
+    
+    private func createOrUpdateProduct(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let productId = data["id"] as? String,
+              let clientId = data["clientId"] as? String else {
+            print("❌ Missing product ID or client ID")
+            return
+        }
+        
+        // Find existing product or create new one
+        let request: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: productId) ?? UUID()) as CVarArg)
+        
+        do {
+            let existingProducts = try context.fetch(request)
+            let product = existingProducts.first ?? ClientProduct(context: context)
+            
+            // Set properties
+            product.id = UUID(uuidString: productId)
+            product.name = data["name"] as? String
+            product.category = data["category"] as? String
+            product.amount = NSDecimalNumber(value: data["amount"] as? Double ?? 0)
+            product.premium = NSDecimalNumber(value: data["premium"] as? Double ?? 0)
+            product.coverage = data["coverage"] as? String
+            product.status = data["status"] as? String
+            product.assetDescription = data["description"] as? String
+            product.createdAt = data["createdAt"] as? Date ?? Date()
+            product.updatedAt = data["updatedAt"] as? Date ?? Date()
+            
+            // Find and set client relationship
+            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+            clientRequest.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: clientId) ?? UUID()) as CVarArg)
+            let clients = try context.fetch(clientRequest)
+            if let client = clients.first {
+                product.client = client
+            }
+            
+        } catch {
+            print("❌ Error creating/updating product: \(error)")
+        }
+    }
+    
+    private func createOrUpdateTask(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let taskId = data["id"] as? String,
+              let clientId = data["clientId"] as? String else {
+            print("❌ Missing task ID or client ID")
+            return
+        }
+        
+        // Find existing task or create new one
+        let request: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: taskId) ?? UUID()) as CVarArg)
+        
+        do {
+            let existingTasks = try context.fetch(request)
+            let task = existingTasks.first ?? ClientTask(context: context)
+            
+            // Set properties
+            task.id = UUID(uuidString: taskId)
+            task.title = data["title"] as? String
+            task.notes = data["notes"] as? String
+            task.isCompleted = data["isCompleted"] as? Bool ?? false
+            task.createdAt = data["createdAt"] as? Date ?? Date()
+            task.updatedAt = data["updatedAt"] as? Date ?? Date()
+            
+            // Find and set client relationship
+            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+            clientRequest.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: clientId) ?? UUID()) as CVarArg)
+            let clients = try context.fetch(clientRequest)
+            if let client = clients.first {
+                task.client = client
+            }
+            
+        } catch {
+            print("❌ Error creating/updating task: \(error)")
         }
     }
     
