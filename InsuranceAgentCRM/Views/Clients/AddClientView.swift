@@ -26,73 +26,124 @@ struct AddClientView: View {
         NavigationView {
             Form {
                 Section("Personal Information") {
-                    HStack {
-                        TextField("First Name", text: $firstName)
-                        TextField("Last Name", text: $lastName)
+                    // Responsive layout for name fields
+                    if DeviceInfo.isIPhone {
+                        VStack(spacing: DeviceInfo.mobileSpacing) {
+                            TextField("First Name", text: $firstName)
+                                .mobileTouchTarget()
+                            TextField("Last Name", text: $lastName)
+                                .mobileTouchTarget()
+                        }
+                    } else {
+                        HStack(spacing: DeviceInfo.mobileSpacing) {
+                            TextField("First Name", text: $firstName)
+                                .mobileTouchTarget()
+                            TextField("Last Name", text: $lastName)
+                                .mobileTouchTarget()
+                        }
                     }
                     
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
+                        .mobileTouchTarget()
                     
                     TextField("Phone", text: $phone)
                         .keyboardType(.phonePad)
+                        .mobileTouchTarget()
                     
                     DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
+                        .mobileTouchTarget()
                     
-                    HStack {
-                        Picker("Sex", selection: $sex) {
-                            Text("Select").tag("Select")
-                            Text("Male").tag("Male")
-                            Text("Female").tag("Female")
-                            Text("Other").tag("Other")
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        
-                        TextField("Age", value: $age, format: .number)
-                            .keyboardType(.numberPad)
-                            .onChange(of: age) { _, newValue in
-                                if newValue < 0 {
-                                    age = 0
-                                } else if newValue > 120 {
-                                    age = 120
-                                }
+                    // Responsive layout for sex and age
+                    if DeviceInfo.isIPhone {
+                        VStack(spacing: DeviceInfo.mobileSpacing) {
+                            Picker("Sex", selection: $sex) {
+                                Text("Select").tag("Select")
+                                Text("Male").tag("Male")
+                                Text("Female").tag("Female")
+                                Text("Other").tag("Other")
                             }
+                            .pickerStyle(MenuPickerStyle())
+                            .mobileTouchTarget()
+                            
+                            TextField("Age", value: $age, format: .number)
+                                .keyboardType(.numberPad)
+                                .mobileTouchTarget()
+                                .onChange(of: age) { _, newValue in
+                                    if newValue < 0 {
+                                        age = 0
+                                    } else if newValue > 120 {
+                                        age = 120
+                                    }
+                                }
+                        }
+                    } else {
+                        HStack(spacing: DeviceInfo.mobileSpacing) {
+                            Picker("Sex", selection: $sex) {
+                                Text("Select").tag("Select")
+                                Text("Male").tag("Male")
+                                Text("Female").tag("Female")
+                                Text("Other").tag("Other")
+                            }
+                            .pickerStyle(MenuPickerStyle())
+                            .mobileTouchTarget()
+                            
+                            TextField("Age", value: $age, format: .number)
+                                .keyboardType(.numberPad)
+                                .mobileTouchTarget()
+                                .onChange(of: age) { _, newValue in
+                                    if newValue < 0 {
+                                        age = 0
+                                    } else if newValue > 120 {
+                                        age = 120
+                                    }
+                                }
+                        }
                     }
                 }
                 
                 Section("Additional Information") {
                     TextField("Address", text: $address, axis: .vertical)
                         .lineLimit(3...6)
+                        .mobileTouchTarget()
                     
                     TextField("Notes", text: $notes, axis: .vertical)
                         .lineLimit(3...6)
+                        .mobileTouchTarget()
                 }
                 
                 Section("Communication") {
                     Toggle("WhatsApp Opt-in", isOn: $whatsappOptIn)
+                        .mobileTouchTarget()
                 }
                 
                 Section("Tags") {
                     ForEach(tags, id: \.self) { tag in
-                        HStack {
+                        HStack(spacing: DeviceInfo.mobileSpacing) {
                             Text(tag)
+                                .font(.system(size: DeviceInfo.isIPhone ? 16 : 14))
                             Spacer()
                             Button("Remove") {
                                 tags.removeAll { $0 == tag }
                             }
+                            .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                             .foregroundColor(.red)
+                            .mobileTouchTarget()
                         }
                     }
                     
-                    HStack {
+                    HStack(spacing: DeviceInfo.mobileSpacing) {
                         TextField("Add tag", text: $newTag)
+                            .mobileTouchTarget()
                         Button("Add") {
                             if !newTag.isEmpty {
                                 tags.append(newTag)
                                 newTag = ""
                             }
                         }
+                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12, weight: .medium))
+                        .mobileTouchTarget()
                     }
                 }
             }
@@ -103,13 +154,17 @@ struct AddClientView: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .font(.system(size: DeviceInfo.isIPhone ? 16 : 14, weight: .medium))
+                    .mobileTouchTarget()
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveClient()
                     }
+                    .font(.system(size: DeviceInfo.isIPhone ? 16 : 14, weight: .semibold))
                     .disabled(firstName.isEmpty || lastName.isEmpty || phone.isEmpty)
+                    .mobileTouchTarget()
                 }
             }
         }

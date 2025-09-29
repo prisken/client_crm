@@ -25,29 +25,29 @@ struct ReportsView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack {
-                // Report Type Picker
-                Picker("Report Type", selection: $selectedReportType) {
-                    ForEach(ReportType.allCases, id: \.self) { type in
-                        Text(type.rawValue).tag(type)
+        if DeviceInfo.isIPhone {
+            // iPhone: NavigationStack with mobile-optimized layout
+            NavigationStack {
+                VStack(spacing: 0) {
+                    // Report Type Picker
+                    Picker("Report Type", selection: $selectedReportType) {
+                        ForEach(ReportType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
+                        }
                     }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding()
-                
-                // Report Content
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Report Header
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(selectedReportType.rawValue)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            
-                            Text("Generated on \(Date().formatted(date: .abbreviated, time: .shortened))")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    .pickerStyle(SegmentedPickerStyle())
+                    .mobilePadding()
+                    
+                    // Report Content
+                    ScrollView {
+                        VStack(spacing: DeviceInfo.mobileSpacing) {
+                            // Report Header
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(selectedReportType.rawValue)
+                                    .mobileTitle()
+                                
+                                Text("Generated on \(Date().formatted(date: .abbreviated, time: .shortened))")
+                                    .mobileCaption()
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
@@ -85,21 +85,88 @@ struct ReportsView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Reports")
-            .onAppear {
-                viewModel.loadReportData(context: viewContext)
+                .navigationTitle("Reports")
+                .navigationBarTitleDisplayMode(.large)
+                .onAppear {
+                    viewModel.loadReportData(context: viewContext)
+                }
             }
-        }
-        .actionSheet(isPresented: $showingExportOptions) {
-            ActionSheet(
-                title: Text("Export Format"),
-                buttons: ExportFormat.allCases.map { format in
-                    .default(Text(format.rawValue)) {
-                        exportFormat = format
-                        exportReport()
+        } else {
+            // iPad: Enhanced layout with better space utilization
+            NavigationView {
+                VStack(spacing: 0) {
+                    // Report Type Picker
+                    Picker("Report Type", selection: $selectedReportType) {
+                        ForEach(ReportType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
+                        }
                     }
-                } + [.cancel()]
-            )
+                    .pickerStyle(SegmentedPickerStyle())
+                    .mobilePadding()
+                    
+                    // Report Content
+                    ScrollView {
+                        VStack(spacing: DeviceInfo.mobileSpacing) {
+                            // Report Header
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(selectedReportType.rawValue)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                
+                                Text("Generated on \(Date().formatted(date: .abbreviated, time: .shortened))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            
+                            // Report Data
+                            switch selectedReportType {
+                            case .clientList:
+                                ClientListReportView(data: viewModel.clientListData)
+                            case .monthlyCommission:
+                                MonthlyCommissionReportView(data: viewModel.monthlyCommissionData)
+                            case .renewalRate:
+                                RenewalRateReportView(data: viewModel.renewalRateData)
+                            case .followUpConversion:
+                                FollowUpConversionReportView(data: viewModel.followUpConversionData)
+                            case .custom:
+                                CustomReportView()
+                            }
+                        }
+                        .mobilePadding()
+                    }
+                    
+                    // Export Button
+                    Button(action: { showingExportOptions = true }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Export Report")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                    .mobilePadding()
+                }
+                .navigationTitle("Reports")
+                .onAppear {
+                    viewModel.loadReportData(context: viewContext)
+                }
+                .confirmationDialog("Export Options", isPresented: $showingExportOptions) {
+                    ForEach(ExportFormat.allCases, id: \.self) { format in
+                        Button(format.rawValue) {
+                            exportFormat = format
+                            exportReport()
+                        }
+                    }
+                    Button("Cancel", role: .cancel) { }
+                }
+            }
         }
     }
     

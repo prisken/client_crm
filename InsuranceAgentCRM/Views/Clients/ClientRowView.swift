@@ -6,36 +6,35 @@ struct ClientRowView: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
+            HStack(spacing: DeviceInfo.isIPhone ? 16 : 12) {
                 // Avatar
                 ClientAvatarView(client: client)
                 
                 // Client Info
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DeviceInfo.isIPhone ? 8 : 6) {
                     Text("\(client.firstName ?? "") \(client.lastName ?? "")")
-                        .font(.headline)
-                        .fontWeight(.semibold)
+                        .font(.system(size: DeviceInfo.isIPhone ? 18 : 16, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     
                     if let email = client.email {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 6) {
                             Image(systemName: "envelope.fill")
-                                .font(.caption2)
+                                .font(.system(size: DeviceInfo.isIPhone ? 12 : 10))
                                 .foregroundColor(.secondary)
                             Text(email)
-                                .font(.subheadline)
+                                .font(.system(size: DeviceInfo.isIPhone ? 15 : 14))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
                         }
                     }
                     
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "phone.fill")
-                            .font(.caption2)
+                            .font(.system(size: DeviceInfo.isIPhone ? 12 : 10))
                             .foregroundColor(.secondary)
                         Text(client.phone ?? "")
-                            .font(.subheadline)
+                            .font(.system(size: DeviceInfo.isIPhone ? 15 : 14))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
@@ -50,10 +49,11 @@ struct ClientRowView: View {
                 // Status indicators
                 ClientStatusIndicatorsView(client: client)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, DeviceInfo.mobilePadding)
+            .padding(.vertical, DeviceInfo.isIPhone ? 16 : 12)
+            .mobileTouchTarget()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .cornerRadius(DeviceInfo.mobileCornerRadius)
             .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
         }
         .buttonStyle(PlainButtonStyle())
@@ -66,11 +66,16 @@ struct ClientAvatarView: View {
     var body: some View {
         Circle()
             .fill(Color.blue.opacity(0.2))
-            .frame(width: 60, height: 60)
+            .frame(
+                width: DeviceInfo.isIPhone ? 64 : 60, 
+                height: DeviceInfo.isIPhone ? 64 : 60
+            )
             .overlay(
                 Text(initials)
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                    .font(.system(
+                        size: DeviceInfo.isIPhone ? 24 : 20, 
+                        weight: .semibold
+                    ))
                     .foregroundColor(.blue)
             )
     }

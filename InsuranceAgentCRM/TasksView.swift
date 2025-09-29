@@ -41,8 +41,10 @@ struct TasksView: View {
     }
     
     var body: some View {
-        NavigationSplitView {
-            VStack {
+        Group {
+        if DeviceInfo.isIPhone {
+            NavigationStack {
+                VStack {
                 // Search Bar
                 SearchBar(text: $searchText)
                     .padding(.horizontal)
@@ -92,31 +94,101 @@ struct TasksView: View {
                     .listStyle(PlainListStyle())
                 }
             }
-            .navigationTitle("Tasks")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddTask = true }) {
-                        Image(systemName: "plus")
+                .navigationTitle("Tasks")
+                .navigationBarTitleDisplayMode(.large)
+                .navigationBarItems(trailing: 
+                    Button("Add Task") {
+                        showingAddTask = true
+                    }
+                )
+                .sheet(isPresented: $showingAddTask) {
+                    BulkTaskCreationView()
+                }
+                .navigationDestination(isPresented: .constant(selectedTask != nil)) {
+                    if let task = selectedTask {
+                        ClientTaskDetailView(task: task)
+                            .id(task.id)
+                            .navigationBarTitleDisplayMode(.inline)
+                            .onDisappear {
+                                selectedTask = nil
+                            }
                     }
                 }
             }
-            .sheet(isPresented: $showingAddTask) {
-                BulkTaskCreationView()
-            }
-        } detail: {
-            if let selectedTask = selectedTask {
-                ClientTaskDetailView(task: selectedTask)
-                    .id(selectedTask.id) // Ensure unique view for each task
-            } else {
+        } else {
+            NavigationSplitView {
                 VStack {
-                    Image(systemName: "doc.text")
-                        .font(.system(size: 50))
-                        .foregroundColor(.secondary)
-                    Text("Select a task to view details")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                    // Search Bar
+                    SearchBar(text: $searchText)
+                        .padding(.horizontal)
+                    
+                    // Filter Picker
+                    Picker("Filter", selection: $selectedFilter) {
+                        ForEach(TaskFilter.allCases, id: \.self) { filter in
+                            Text(filter.rawValue).tag(filter)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal)
+                    
+                    // Collapse Done Tasks Toggle
+                    if selectedFilter == .all {
+                        HStack {
+                            Button(action: { collapsedDoneTasks.toggle() }) {
+                                HStack {
+                                    Image(systemName: collapsedDoneTasks ? "chevron.right" : "chevron.down")
+                                    Text("Collapse Done Tasks")
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .foregroundColor(.blue)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                    }
+                    
+                    ScrollView(.vertical, showsIndicators: true) {
+                        LazyVStack(spacing: DeviceInfo.mobileSpacing) {
+                            ForEach(filteredTasks, id: \.id) { task in
+                                TasksViewTaskRow(task: task) {
+                                    toggleTaskCompletion(task)
+                                }
+                                .tag(task)
+                                .onTapGesture {
+                                    selectedTask = task
+                                }
+                                .mobileTouchTarget()
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .navigationTitle("Tasks")
+                .navigationBarTitleDisplayMode(.large)
+                .navigationBarItems(trailing: 
+                    Button("Add Task") {
+                        showingAddTask = true
+                    }
+                )
+                .sheet(isPresented: $showingAddTask) {
+                    BulkTaskCreationView()
+                }
+            } detail: {
+                if let selectedTask = selectedTask {
+                    ClientTaskDetailView(task: selectedTask)
+                        .id(selectedTask.id) // Ensure unique view for each task
+                } else {
+                    VStack {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 50))
+                            .foregroundColor(.secondary)
+                        Text("Select a task to view details")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
+        }
         }
         .onAppear {
             // Fetch from Firebase first
@@ -332,7 +404,7 @@ struct AddTaskView: View {
             }
             .navigationTitle("Add Task")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
@@ -345,7 +417,7 @@ struct AddTaskView: View {
                     }
                     .disabled(title.isEmpty || selectedClient == nil)
                 }
-            }
+            })
         }
         .onAppear {
             loadClients()
@@ -485,7 +557,10 @@ struct ClientTaskDetailView: View {
                         
                         Spacer()
                         
-                        StatusBadge(status: task.isCompleted ? "completed" : "pending")
+                        StatusBadge(
+                            title: task.isCompleted ? "completed" : "pending",
+                            color: task.isCompleted ? .green : .orange
+                        )
                     }
                     
                     if let client = task.client {
@@ -611,33 +686,6 @@ struct DetailRow: View {
     }
 }
 
-struct StatusBadge: View {
-    let status: String
-    
-    var body: some View {
-        Text(status.capitalized)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(statusColor)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-    }
-    
-    private var statusColor: Color {
-        switch status {
-        case "completed":
-            return .green
-        case "pending":
-            return .orange
-        case "overdue":
-            return .red
-        default:
-            return .gray
-        }
-    }
-}
 
 struct PriorityText: View {
     let priority: Int
@@ -760,7 +808,7 @@ struct NewAddRemarkSheet: View {
             .padding()
             .navigationTitle("Add Remark")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
@@ -773,7 +821,7 @@ struct NewAddRemarkSheet: View {
                     }
                     .disabled(newRemark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-            }
+            })
         }
     }
 }
@@ -801,7 +849,7 @@ struct NewEditRemarkSheet: View {
             .padding()
             .navigationTitle("Edit Remark")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
@@ -814,7 +862,7 @@ struct NewEditRemarkSheet: View {
                     }
                     .disabled(remark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-            }
+            })
         }
     }
 }
@@ -864,7 +912,7 @@ struct AddRemarkSheet: View {
             .padding()
             .navigationTitle("Add Remark")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
@@ -877,7 +925,7 @@ struct AddRemarkSheet: View {
                     }
                     .disabled(newRemark.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-            }
+            })
         }
     }
 }

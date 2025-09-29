@@ -30,24 +30,19 @@ class FirebaseStructureValidator: ObservableObject {
         validationStatus = "🔍 Validating Firebase structure..."
         validationResults.removeAll()
         
-        do {
-            // Test 1: Verify user-specific collections exist and are accessible
-            await validateUserCollections(userId: currentUser.uid)
-            
-            // Test 2: Verify no global collections exist
-            await validateNoGlobalCollections()
-            
-            // Test 3: Verify data isolation
-            await validateDataIsolation(userId: currentUser.uid)
-            
-            // Test 4: Verify authentication requirements
-            await validateAuthenticationRequirements()
-            
-            validationStatus = "✅ Validation completed"
-            
-        } catch {
-            validationStatus = "❌ Validation failed: \(error.localizedDescription)"
-        }
+        // Test 1: Verify user-specific collections exist and are accessible
+        await validateUserCollections(userId: currentUser.uid)
+        
+        // Test 2: Verify no global collections exist
+        await validateNoGlobalCollections()
+        
+        // Test 3: Verify data isolation
+        await validateDataIsolation(userId: currentUser.uid)
+        
+        // Test 4: Verify authentication requirements
+        await validateAuthenticationRequirements()
+        
+        validationStatus = "✅ Validation completed"
         
         isValidating = false
     }
@@ -66,7 +61,7 @@ class FirebaseStructureValidator: ObservableObject {
         
         for collection in collections {
             do {
-                let snapshot = try await db.collection("users")
+                let _ = try await db.collection("users")
                     .document(userId)
                     .collection(collection)
                     .limit(to: 1)

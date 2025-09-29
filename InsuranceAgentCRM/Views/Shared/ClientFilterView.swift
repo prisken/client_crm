@@ -38,28 +38,27 @@ struct ClientFilterView: View {
     @State private var showingTagSelection = false
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DeviceInfo.mobileSpacing) {
             // Filter Header
             HStack {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                     .foregroundColor(.blue)
+                    .font(.system(size: DeviceInfo.isIPhone ? 16 : 14))
                 
                 Text("Filters")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(.system(size: DeviceInfo.isIPhone ? 18 : 16, weight: .semibold))
                 
                 Spacer()
                 
                 // Active filter count badge
                 if hasActiveFilters {
                     Text("\(activeFilterCount)")
-                        .font(.caption)
-                        .fontWeight(.medium)
+                        .font(.system(size: DeviceInfo.isIPhone ? 12 : 11, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, DeviceInfo.isIPhone ? 10 : 8)
+                        .padding(.vertical, DeviceInfo.isIPhone ? 6 : 4)
                         .background(Color.blue)
-                        .cornerRadius(8)
+                        .cornerRadius(DeviceInfo.mobileCornerRadius)
                 }
                 
                 Button(action: {
@@ -68,16 +67,17 @@ struct ClientFilterView: View {
                     }
                 }) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.caption)
+                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                         .foregroundColor(.blue)
                         .animation(.easeInOut(duration: 0.2), value: isExpanded)
                 }
+                .mobileTouchTarget()
             }
-            .padding(.horizontal)
+            .padding(.horizontal, DeviceInfo.mobilePadding)
             
             // Filter Content
             if isExpanded {
-                VStack(spacing: 16) {
+                VStack(spacing: DeviceInfo.mobileSpacing) {
                     // Active Status Filter
                     activeStatusFilter
                     
@@ -89,20 +89,21 @@ struct ClientFilterView: View {
                         Button("Clear All Filters") {
                             clearAllFilters()
                         }
-                        .font(.caption)
+                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                         .foregroundColor(.red)
-                        .padding(.horizontal)
+                        .mobileTouchTarget()
+                        .padding(.horizontal, DeviceInfo.mobilePadding)
                     }
                 }
-                .padding(.bottom)
+                .padding(.bottom, DeviceInfo.mobilePadding)
                 .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .cornerRadius(DeviceInfo.mobileCornerRadius)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DeviceInfo.mobilePadding)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(DeviceInfo.mobileCornerRadius)
         .sheet(isPresented: $showingTagSelection) {
             TagSelectionSheet(
                 selectedTags: $filter.selectedTags,
@@ -113,71 +114,70 @@ struct ClientFilterView: View {
     
     // MARK: - Active Status Filter
     private var activeStatusFilter: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DeviceInfo.mobileSpacing) {
             Text("Client Status")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .padding(.horizontal)
+                .font(.system(size: DeviceInfo.isIPhone ? 16 : 14, weight: .medium))
+                .padding(.horizontal, DeviceInfo.mobilePadding)
             
-            HStack(spacing: 12) {
+            HStack(spacing: DeviceInfo.mobileSpacing) {
                 ForEach(ClientFilter.ActiveStatusFilter.allCases, id: \.self) { status in
                     Button(action: {
                         filter.activeStatus = status
                     }) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: DeviceInfo.isIPhone ? 8 : 6) {
                             Image(systemName: status.icon)
-                                .font(.caption)
+                                .font(.system(size: DeviceInfo.isIPhone ? 12 : 11))
                             
                             Text(status.rawValue)
-                                .font(.caption)
-                                .fontWeight(.medium)
+                                .font(.system(size: DeviceInfo.isIPhone ? 14 : 12, weight: .medium))
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, DeviceInfo.isIPhone ? 16 : 12)
+                        .padding(.vertical, DeviceInfo.isIPhone ? 12 : 8)
                         .background(filter.activeStatus == status ? status.color : Color(.systemGray5))
                         .foregroundColor(filter.activeStatus == status ? .white : .primary)
-                        .cornerRadius(16)
+                        .cornerRadius(DeviceInfo.mobileCornerRadius)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .mobileTouchTarget()
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, DeviceInfo.mobilePadding)
         }
     }
     
     // MARK: - Tag Filter
     private var tagFilter: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DeviceInfo.mobileSpacing) {
             HStack {
                 Text("Tags")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(size: DeviceInfo.isIPhone ? 16 : 14, weight: .medium))
                 
                 Spacer()
                 
                 Button("Select Tags") {
                     showingTagSelection = true
                 }
-                .font(.caption)
+                .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                 .foregroundColor(.blue)
+                .mobileTouchTarget()
             }
-            .padding(.horizontal)
+            .padding(.horizontal, DeviceInfo.mobilePadding)
             
             if filter.selectedTags.isEmpty {
                 Text("No tags selected")
-                    .font(.caption)
+                    .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                     .foregroundColor(.secondary)
-                    .padding(.horizontal)
+                    .padding(.horizontal, DeviceInfo.mobilePadding)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: DeviceInfo.mobileSpacing) {
                         ForEach(Array(filter.selectedTags), id: \.self) { tag in
                             TagFilterChip(tag: tag) {
                                 filter.selectedTags.remove(tag)
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, DeviceInfo.mobilePadding)
                 }
             }
         }
@@ -214,23 +214,23 @@ struct TagFilterChip: View {
     let onRemove: () -> Void
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DeviceInfo.isIPhone ? 6 : 4) {
             Text(tag)
-                .font(.caption)
-                .fontWeight(.medium)
+                .font(.system(size: DeviceInfo.isIPhone ? 13 : 11, weight: .medium))
             
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.caption)
+                    .font(.system(size: DeviceInfo.isIPhone ? 12 : 10))
                     .foregroundColor(.secondary)
             }
             .buttonStyle(PlainButtonStyle())
+            .mobileTouchTarget()
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, DeviceInfo.isIPhone ? 12 : 8)
+        .padding(.vertical, DeviceInfo.isIPhone ? 8 : 4)
         .background(Color.blue.opacity(0.2))
         .foregroundColor(.blue)
-        .cornerRadius(12)
+        .cornerRadius(DeviceInfo.mobileCornerRadius)
     }
 }
 
@@ -371,37 +371,36 @@ struct CompactClientFilterView: View {
     @State private var showingTagSelection = false
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DeviceInfo.mobileSpacing) {
             // Filter Header with Active Status
             HStack {
-                HStack(spacing: 8) {
+                HStack(spacing: DeviceInfo.isIPhone ? 10 : 8) {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                         .foregroundColor(.blue)
-                        .font(.caption)
+                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                     
                     Text("Filters")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                        .font(.system(size: DeviceInfo.isIPhone ? 16 : 14, weight: .medium))
                 }
                 
                 Spacer()
                 
                 // Active Status Filter (Inline)
-                HStack(spacing: 6) {
+                HStack(spacing: DeviceInfo.isIPhone ? 8 : 6) {
                     ForEach(ClientFilter.ActiveStatusFilter.allCases, id: \.self) { status in
                         Button(action: {
                             filter.activeStatus = status
                         }) {
                             Text(status.rawValue)
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
+                                .font(.system(size: DeviceInfo.isIPhone ? 12 : 10, weight: .medium))
+                                .padding(.horizontal, DeviceInfo.isIPhone ? 12 : 8)
+                                .padding(.vertical, DeviceInfo.isIPhone ? 8 : 4)
                                 .background(filter.activeStatus == status ? status.color : Color(.systemGray5))
                                 .foregroundColor(filter.activeStatus == status ? .white : .primary)
-                                .cornerRadius(12)
+                                .cornerRadius(DeviceInfo.mobileCornerRadius)
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .mobileTouchTarget()
                     }
                 }
             }
@@ -410,18 +409,18 @@ struct CompactClientFilterView: View {
             if !filter.selectedTags.isEmpty {
                 HStack {
                     Text("Tags:")
-                        .font(.caption2)
+                        .font(.system(size: DeviceInfo.isIPhone ? 12 : 10))
                         .foregroundColor(.secondary)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: DeviceInfo.isIPhone ? 6 : 4) {
                             ForEach(Array(filter.selectedTags), id: \.self) { tag in
                                 CompactTagChip(tag: tag) {
                                     filter.selectedTags.remove(tag)
                                 }
                             }
                         }
-                        .padding(.horizontal, 1)
+                        .padding(.horizontal, 2)
                     }
                     
                     Spacer()
@@ -433,16 +432,16 @@ struct CompactClientFilterView: View {
                 Button(action: {
                     showingTagSelection = true
                 }) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DeviceInfo.isIPhone ? 6 : 4) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.caption2)
+                            .font(.system(size: DeviceInfo.isIPhone ? 12 : 10))
                         Text("Add Tags")
-                            .font(.caption2)
-                            .fontWeight(.medium)
+                            .font(.system(size: DeviceInfo.isIPhone ? 12 : 10, weight: .medium))
                     }
                     .foregroundColor(.blue)
                 }
                 .buttonStyle(PlainButtonStyle())
+                .mobileTouchTarget()
                 
                 Spacer()
                 
@@ -451,15 +450,16 @@ struct CompactClientFilterView: View {
                     Button("Clear") {
                         clearAllFilters()
                     }
-                    .font(.caption2)
+                    .font(.system(size: DeviceInfo.isIPhone ? 12 : 10))
                     .foregroundColor(.red)
+                    .mobileTouchTarget()
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DeviceInfo.mobilePadding)
+        .padding(.vertical, DeviceInfo.mobilePadding)
         .background(Color(.systemGray6))
-        .cornerRadius(8)
+        .cornerRadius(DeviceInfo.mobileCornerRadius)
         .sheet(isPresented: $showingTagSelection) {
             TagSelectionSheet(
                 selectedTags: $filter.selectedTags,
@@ -488,23 +488,23 @@ struct CompactTagChip: View {
     let onRemove: () -> Void
     
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: DeviceInfo.isIPhone ? 4 : 2) {
             Text(tag)
-                .font(.caption2)
-                .fontWeight(.medium)
+                .font(.system(size: DeviceInfo.isIPhone ? 11 : 9, weight: .medium))
             
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.caption2)
+                    .font(.system(size: DeviceInfo.isIPhone ? 10 : 8))
                     .foregroundColor(.secondary)
             }
             .buttonStyle(PlainButtonStyle())
+            .mobileTouchTarget()
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
+        .padding(.horizontal, DeviceInfo.isIPhone ? 8 : 6)
+        .padding(.vertical, DeviceInfo.isIPhone ? 6 : 2)
         .background(Color.blue.opacity(0.2))
         .foregroundColor(.blue)
-        .cornerRadius(8)
+        .cornerRadius(DeviceInfo.mobileCornerRadius)
     }
 }
 

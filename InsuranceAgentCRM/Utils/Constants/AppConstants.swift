@@ -127,4 +127,13 @@ struct DeviceInfo {
     static let isLargeScreen = screenWidth > 414
     static let isCompactWidth = screenWidth < 768 // iPad Pro 11" and below, all iPhones
     static let isRegularWidth = !isCompactWidth // iPad Pro 12.9" and larger
+    
+    // MARK: - Mobile Optimization Constants
+    static let mobilePadding: CGFloat = isIPhone ? 16 : 20
+    static let mobileSpacing: CGFloat = isIPhone ? 12 : 16
+    static let mobileCornerRadius: CGFloat = isIPhone ? 12 : 16
+    static let mobileButtonHeight: CGFloat = isIPhone ? 48 : 44
+    static let mobileTouchTarget: CGFloat = isIPhone ? 44 : 40
+    static let mobileCardPadding: CGFloat = isIPhone ? 16 : 20
+    static let mobileFontScale: CGFloat = isIPhone ? 1.0 : 1.1
 }

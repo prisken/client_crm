@@ -29,27 +29,22 @@ class SystemTester: ObservableObject {
         testStatus = "🚀 Starting comprehensive system tests..."
         testResults.removeAll()
         
-        do {
-            // Test 1: Authentication System
-            await testAuthenticationSystem(context: context)
-            
-            // Test 2: Firebase Structure
-            await testFirebaseStructure()
-            
-            // Test 3: Data Sync System
-            await testDataSyncSystem(context: context)
-            
-            // Test 4: User Isolation
-            await testUserIsolation()
-            
-            // Test 5: Core Data Integration
-            await testCoreDataIntegration(context: context)
-            
-            testStatus = "✅ All tests completed successfully!"
-            
-        } catch {
-            testStatus = "❌ Testing failed: \(error.localizedDescription)"
-        }
+        // Test 1: Authentication System
+        await testAuthenticationSystem(context: context)
+        
+        // Test 2: Firebase Structure
+        await testFirebaseStructure()
+        
+        // Test 3: Data Sync System
+        await testDataSyncSystem(context: context)
+        
+        // Test 4: User Isolation
+        await testUserIsolation()
+        
+        // Test 5: Core Data Integration
+        await testCoreDataIntegration(context: context)
+        
+        testStatus = "✅ All tests completed successfully!"
         
         isTesting = false
     }
@@ -116,7 +111,7 @@ class SystemTester: ObservableObject {
         
         for collection in collections {
             do {
-                let snapshot = try await db.collection("users")
+                let _ = try await db.collection("users")
                     .document(currentUser.uid)
                     .collection(collection)
                     .limit(to: 1)
@@ -243,7 +238,7 @@ class SystemTester: ObservableObject {
         
         // Test current user's data access
         do {
-            let snapshot = try await db.collection("users")
+            let _ = try await db.collection("users")
                 .document(currentUser.uid)
                 .collection("clients")
                 .limit(to: 1)

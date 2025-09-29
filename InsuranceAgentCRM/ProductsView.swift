@@ -10,47 +10,105 @@ struct ProductsView: View {
     @State private var searchText = ""
     
     var body: some View {
-        NavigationView {
-            VStack {
-                // Search Bar
-                SearchBar(text: $searchText)
-                    .padding(.horizontal)
-                
-                // Products List
-                if filteredProducts.isEmpty {
-                    EmptyStateView(
-                        icon: "shippingbox.fill",
-                        title: "No Products",
-                        subtitle: "Add your first product to get started"
-                    )
-                } else {
-                    List {
-                        ForEach(filteredProducts) { product in
-                            ProductRowView(product: product) {
-                                selectedProduct = product
+        Group {
+        if DeviceInfo.isIPhone {
+            // iPhone: NavigationStack with enhanced mobile UX
+            NavigationStack {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(spacing: DeviceInfo.mobileSpacing) {
+                        // Search Bar
+                        SearchBar(text: $searchText)
+                            .mobilePadding()
+                        
+                        // Products List
+                        if filteredProducts.isEmpty {
+                            EmptyStateView(
+                                icon: "shippingbox.fill",
+                                title: "No Products",
+                                subtitle: "Add your first product to get started"
+                            )
+                        } else {
+                            LazyVStack(spacing: DeviceInfo.mobileSpacing) {
+                                ForEach(filteredProducts) { product in
+                                    ProductRowView(product: product) {
+                                        selectedProduct = product
+                                    }
+                                    .mobileCardStyle()
+                                    .mobileTouchTarget()
+                                }
                             }
+                            .mobilePadding()
                         }
-                        .onDelete(perform: deleteProducts)
                     }
-                    .listStyle(PlainListStyle())
                 }
-            }
-            .navigationTitle("Products")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                .navigationTitle("Products")
+                .navigationBarTitleDisplayMode(.large)
+                .navigationBarItems(trailing: 
                     Button(action: { showingAddProduct = true }) {
                         Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .medium))
                     }
+                    .mobileTouchTarget()
+                )
+                .sheet(isPresented: $showingAddProduct) {
+                    AddProductView()
+                        .environment(\.managedObjectContext, viewContext)
+                }
+                .sheet(item: $selectedProduct) { product in
+                    ProductDetailView(product: product)
+                        .environment(\.managedObjectContext, viewContext)
                 }
             }
-            .sheet(isPresented: $showingAddProduct) {
-                AddProductView()
-                    .environment(\.managedObjectContext, viewContext)
+        } else {
+            // iPad: Enhanced layout with better space utilization
+            NavigationView {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(spacing: DeviceInfo.mobileSpacing) {
+                        // Search Bar
+                        SearchBar(text: $searchText)
+                            .mobilePadding()
+                        
+                        // Products List
+                        if filteredProducts.isEmpty {
+                            EmptyStateView(
+                                icon: "shippingbox.fill",
+                                title: "No Products",
+                                subtitle: "Add your first product to get started"
+                            )
+                        } else {
+                            LazyVGrid(columns: [
+                                GridItem(.adaptive(minimum: 300), spacing: DeviceInfo.mobileSpacing)
+                            ], spacing: DeviceInfo.mobileSpacing) {
+                                ForEach(filteredProducts) { product in
+                                    ProductRowView(product: product) {
+                                        selectedProduct = product
+                                    }
+                                    .mobileCardStyle()
+                                    .mobileTouchTarget()
+                                }
+                            }
+                            .mobilePadding()
+                        }
+                    }
+                }
+                .navigationTitle("Products")
+                .navigationBarItems(trailing: 
+                    Button(action: { showingAddProduct = true }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .mobileTouchTarget()
+                )
+                .sheet(isPresented: $showingAddProduct) {
+                    AddProductView()
+                        .environment(\.managedObjectContext, viewContext)
+                }
+                .sheet(item: $selectedProduct) { product in
+                    ProductDetailView(product: product)
+                        .environment(\.managedObjectContext, viewContext)
+                }
             }
-            .sheet(item: $selectedProduct) { product in
-                ProductDetailView(product: product)
-                    .environment(\.managedObjectContext, viewContext)
-            }
+        }
         }
         .onAppear {
             // Fetch from Firebase first, then load local products
@@ -102,48 +160,55 @@ struct ProductRowView: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack {
+            HStack(spacing: DeviceInfo.mobileSpacing) {
                 // Product Icon
                 Circle()
                     .fill(productTypeColor.opacity(0.2))
-                    .frame(width: 50, height: 50)
+                    .frame(
+                        width: DeviceInfo.isIPhone ? 60 : 50,
+                        height: DeviceInfo.isIPhone ? 60 : 50
+                    )
                     .overlay(
                         Image(systemName: productTypeIcon)
-                            .font(.title2)
+                            .font(.system(size: DeviceInfo.isIPhone ? 24 : 20))
                             .foregroundColor(productTypeColor)
                     )
                 
                 // Product Info
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DeviceInfo.isIPhone ? 6 : 4) {
                     Text(product.name ?? "Untitled Product")
-                        .font(.headline)
+                        .font(.system(size: DeviceInfo.isIPhone ? 17 : 16, weight: .semibold))
                         .foregroundColor(.primary)
+                        .lineLimit(2)
                     
                     Text(product.code ?? "")
-                        .font(.caption)
+                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                         .foregroundColor(.secondary)
                     
                     Text(product.productType ?? "")
-                        .font(.caption)
+                        .font(.system(size: DeviceInfo.isIPhone ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
                 
                 Spacer()
                 
                 // Price
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: DeviceInfo.isIPhone ? 6 : 4) {
                     Text("Base Premium")
-                        .font(.caption)
+                        .font(.system(size: DeviceInfo.isIPhone ? 12 : 11))
                         .foregroundColor(.secondary)
                     
                     Text(formatCurrency(product.basePremium?.decimalValue ?? 0))
-                        .font(.headline)
+                        .font(.system(size: DeviceInfo.isIPhone ? 16 : 15, weight: .semibold))
                         .foregroundColor(.primary)
+                        .lineLimit(1)
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, DeviceInfo.isIPhone ? 12 : 8)
+            .padding(.horizontal, DeviceInfo.mobilePadding)
         }
         .buttonStyle(PlainButtonStyle())
+        .mobileTouchTarget()
     }
     
     private var productTypeColor: Color {
@@ -252,20 +317,15 @@ struct AddProductView: View {
             }
             .navigationTitle("Add Product")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    dismiss()
+                },
+                trailing: Button("Save") {
+                    saveProduct()
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveProduct()
-                    }
-                    .disabled(code.isEmpty || name.isEmpty)
-                }
-            }
+                .disabled(code.isEmpty || name.isEmpty)
+            )
         }
     }
     
@@ -407,19 +467,14 @@ struct ProductDetailView: View {
             }
             .navigationTitle("Product Details")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
+            .navigationBarItems(
+                leading: Button("Close") {
+                    dismiss()
+                },
+                trailing: Button("Edit") {
+                    showingEditProduct = true
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Edit") {
-                        showingEditProduct = true
-                    }
-                }
-            }
+            )
         }
         .sheet(isPresented: $showingEditProduct) {
             EditProductView(product: product)
@@ -548,20 +603,15 @@ struct EditProductView: View {
             }
             .navigationTitle("Edit Product")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    dismiss()
+                },
+                trailing: Button("Save") {
+                    saveChanges()
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveChanges()
-                    }
-                    .disabled(code.isEmpty || name.isEmpty)
-                }
-            }
+                .disabled(code.isEmpty || name.isEmpty)
+            )
         }
     }
     
@@ -695,20 +745,15 @@ struct QuoteBuilderView: View {
             }
             .navigationTitle("Create Quote")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    dismiss()
+                },
+                trailing: Button("Save Quote") {
+                    saveQuote()
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save Quote") {
-                        saveQuote()
-                    }
-                    .disabled(selectedClient == nil || coverageAmount <= 0)
-                }
-            }
+                .disabled(selectedClient == nil || coverageAmount <= 0)
+            )
         }
         .onChange(of: coverageAmount) { _, _ in updateFinalPremium() }
         .onChange(of: selectedRiders) { _, _ in updateFinalPremium() }

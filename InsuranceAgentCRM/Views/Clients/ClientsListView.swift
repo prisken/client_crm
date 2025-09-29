@@ -22,8 +22,8 @@ struct ClientsListView: View {
         VStack(spacing: 0) {
             // Filter Section
             ClientFilterView(filter: $clientFilter, tagManager: TagManager.shared)
-                .padding(.horizontal)
-                .padding(.top, 8)
+                .mobilePadding()
+                .padding(.top, DeviceInfo.isIPhone ? 8 : 12)
             
             // Clients List
             if viewModel.clients.isEmpty {

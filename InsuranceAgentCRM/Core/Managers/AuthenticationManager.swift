@@ -99,10 +99,12 @@ class AuthenticationManager: ObservableObject {
             let idToken = try await authResult.user.getIDToken()
             keychain.saveToken(idToken)
             
+            let userRole = UserRole(rawValue: user.role ?? "agent") ?? .agent
+            let currentUser = user
             await MainActor.run {
                 self.isAuthenticated = true
-                self.currentUser = user
-                self.userRole = UserRole(rawValue: user.role ?? "agent") ?? .agent
+                self.currentUser = currentUser
+                self.userRole = userRole
             }
             
             

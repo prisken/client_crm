@@ -167,6 +167,84 @@ extension View {
             content()
         }
     }
+    
+    // MARK: - Mobile Optimized Modifiers
+    func mobilePadding() -> some View {
+        self.padding(DeviceInfo.mobilePadding)
+    }
+    
+    func mobileCardStyle() -> some View {
+        self
+            .padding(DeviceInfo.mobileCardPadding)
+            .background(Color(.systemBackground))
+            .cornerRadius(DeviceInfo.mobileCornerRadius)
+            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+    }
+    
+    func mobileButtonStyle(_ style: MobileButtonStyle = .primary) -> some View {
+        self
+            .frame(height: DeviceInfo.mobileButtonHeight)
+            .frame(maxWidth: .infinity)
+            .background(style.backgroundColor)
+            .foregroundColor(style.foregroundColor)
+            .cornerRadius(DeviceInfo.mobileCornerRadius)
+            .font(.system(size: 16 * DeviceInfo.mobileFontScale, weight: .medium))
+    }
+    
+    func mobileTouchTarget() -> some View {
+        self
+            .frame(minHeight: DeviceInfo.mobileTouchTarget)
+            .contentShape(Rectangle())
+    }
+    
+    func mobileSpacing() -> some View {
+        self.padding(.vertical, DeviceInfo.mobileSpacing / 2)
+    }
+    
+    func mobileTitle() -> some View {
+        self
+            .font(.system(size: 24 * DeviceInfo.mobileFontScale, weight: .bold))
+            .foregroundColor(.primary)
+    }
+    
+    func mobileSubtitle() -> some View {
+        self
+            .font(.system(size: 18 * DeviceInfo.mobileFontScale, weight: .semibold))
+            .foregroundColor(.secondary)
+    }
+    
+    func mobileBody() -> some View {
+        self
+            .font(.system(size: 16 * DeviceInfo.mobileFontScale))
+            .foregroundColor(.primary)
+    }
+    
+    func mobileCaption() -> some View {
+        self
+            .font(.system(size: 14 * DeviceInfo.mobileFontScale))
+            .foregroundColor(.secondary)
+    }
+}
+
+// MARK: - Mobile Button Styles
+enum MobileButtonStyle {
+    case primary, secondary, destructive
+    
+    var backgroundColor: Color {
+        switch self {
+        case .primary: return .blue
+        case .secondary: return Color(.systemGray5)
+        case .destructive: return .red
+        }
+    }
+    
+    var foregroundColor: Color {
+        switch self {
+        case .primary: return .white
+        case .secondary: return .primary
+        case .destructive: return .white
+        }
+    }
 }
 
 // MARK: - View Modifiers

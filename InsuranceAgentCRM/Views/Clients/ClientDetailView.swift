@@ -10,9 +10,20 @@ struct ClientDetailView: View {
     @State private var isEditMode = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            headerView
-            contentView
+        Group {
+            if DeviceInfo.isIPhone {
+                // iPhone: Mobile-optimized layout
+                VStack(spacing: 0) {
+                    headerView
+                    contentView
+                }
+            } else {
+                // iPad: Enhanced layout with better space utilization
+                VStack(spacing: 0) {
+                    headerView
+                    contentView
+                }
+            }
         }
         .onAppear {
             // Reset edit mode when switching to a different client
@@ -30,32 +41,34 @@ struct ClientDetailView: View {
     
     // MARK: - Header View
     private var headerView: some View {
-            HStack {
+        HStack {
             Text(client.displayName)
-                .font(.title2)
-                    .fontWeight(.semibold)
+                .font(DeviceInfo.isIPhone ? .title3 : .title2)
+                .fontWeight(.semibold)
+                .lineLimit(DeviceInfo.isIPhone ? 1 : 2)
             
-                Spacer()
+            Spacer()
             
-        Button(isEditMode ? "Done" : "Edit") {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                isEditMode.toggle()
-                if isEditMode {
-                    // Force refresh the view context to ensure all data is fresh
-                    viewContext.refreshAllObjects()
+            Button(isEditMode ? "Done" : "Edit") {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isEditMode.toggle()
+                    if isEditMode {
+                        // Force refresh the view context to ensure all data is fresh
+                        viewContext.refreshAllObjects()
+                    }
                 }
             }
-        }
             .buttonStyle(.borderedProminent)
+            .mobileTouchTarget()
         }
-        .padding()
+        .mobilePadding()
         .background(Color(.systemGray6))
     }
     
     // MARK: - Content View
     private var contentView: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: DeviceInfo.isIPhone ? DeviceInfo.mobileSpacing : 20) {
                 // 1. Basic Info Section
                 BasicInfoSection(client: client, isEditMode: $isEditMode)
                 
@@ -71,13 +84,13 @@ struct ClientDetailView: View {
                 // 5. Stage Two: Fact Finding
                 StageTwoSection(client: client, isEditMode: isEditMode)
                 
-                       // 6. Age Section
-                       AgeSection(client: client, isEditMode: isEditMode)
+                // 6. Age Section
+                AgeSection(client: client, isEditMode: isEditMode)
                 
                 // 7. Stage Three: Product Pairing
                 StageThreeSection(client: client, isEditMode: isEditMode)
-        }
-        .padding()
+            }
+            .mobilePadding()
         }
     }
 }

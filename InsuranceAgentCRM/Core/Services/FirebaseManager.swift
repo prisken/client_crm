@@ -311,8 +311,10 @@ class FirebaseManager: ObservableObject {
             return
         }
         
-        isSyncing = true
-        syncError = nil
+        DispatchQueue.main.async {
+            self.isSyncing = true
+            self.syncError = nil
+        }
         
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
@@ -574,11 +576,15 @@ class FirebaseManager: ObservableObject {
         } catch {
             print("❌ Error in final context save: \(error.localizedDescription)")
             logDetailedError(error)
-            syncError = "Error saving data: \(error.localizedDescription)"
+            DispatchQueue.main.async {
+                self.syncError = "Error saving data: \(error.localizedDescription)"
+            }
         }
         
-        lastSyncDate = Date()
-        isSyncing = false
+        DispatchQueue.main.async {
+            self.lastSyncDate = Date()
+            self.isSyncing = false
+        }
         print("✅ All data fetched and saved from Firebase")
     }
     
@@ -663,7 +669,7 @@ class FirebaseManager: ObservableObject {
         
         // Associate client with the current authenticated user (not the ownerId from Firebase)
         // This ensures the client appears for the current user regardless of who originally created it
-        if let currentUserId = Auth.auth().currentUser?.uid {
+        if Auth.auth().currentUser?.uid != nil {
             // Find the current user by Firebase UID (stored in email or another field)
             let userRequest: NSFetchRequest<User> = User.fetchRequest()
             // Try to find user by email first (most reliable)

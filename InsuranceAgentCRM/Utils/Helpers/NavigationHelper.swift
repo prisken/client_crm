@@ -127,7 +127,7 @@ class NavigationCoordinator: ObservableObject {
 // MARK: - Deep Link Handler
 struct DeepLinkHandler {
     static func handle(_ url: URL) -> NavigationPath {
-        var path = NavigationPath()
+        let path = NavigationPath()
         
         // Parse URL and create navigation path
         // This would be implemented based on your app's deep linking requirements
