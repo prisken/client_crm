@@ -104,7 +104,11 @@ class FirebaseManager: ObservableObject {
     }
     
     func syncAsset(_ asset: Asset) {
-        guard let assetId = asset.id?.uuidString else { return }
+        guard let assetId = asset.id?.uuidString,
+              let clientId = asset.client?.id?.uuidString else { 
+            print("❌ Asset or Client ID not found")
+            return 
+        }
         
         let assetData: [String: Any] = [
             "id": assetId,
@@ -112,7 +116,7 @@ class FirebaseManager: ObservableObject {
             "type": asset.type ?? "",
             "amount": asset.amount?.doubleValue ?? 0,
             "description": asset.assetDescription ?? "",
-            "clientId": asset.client?.id?.uuidString ?? "",
+            "clientId": clientId,
             "createdAt": asset.createdAt ?? Date(),
             "updatedAt": asset.updatedAt ?? Date()
         ]
@@ -123,7 +127,8 @@ class FirebaseManager: ObservableObject {
             return
         }
         
-        db.collection("users").document(currentUserId).collection("assets").document(assetId).setData(assetData) { [weak self] error in
+        // Save asset to Firebase under client's collection (CORRECT STRUCTURE)
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("assets").document(assetId).setData(assetData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync asset: \(error.localizedDescription)"
@@ -135,7 +140,11 @@ class FirebaseManager: ObservableObject {
     }
     
     func syncExpense(_ expense: Expense) {
-        guard let expenseId = expense.id?.uuidString else { return }
+        guard let expenseId = expense.id?.uuidString,
+              let clientId = expense.client?.id?.uuidString else { 
+            print("❌ Expense or Client ID not found")
+            return 
+        }
         
         let expenseData: [String: Any] = [
             "id": expenseId,
@@ -144,7 +153,7 @@ class FirebaseManager: ObservableObject {
             "amount": expense.amount?.doubleValue ?? 0,
             "frequency": expense.frequency ?? "",
             "description": expense.assetDescription ?? "",
-            "clientId": expense.client?.id?.uuidString ?? "",
+            "clientId": clientId,
             "createdAt": expense.createdAt ?? Date(),
             "updatedAt": expense.updatedAt ?? Date()
         ]
@@ -155,7 +164,8 @@ class FirebaseManager: ObservableObject {
             return
         }
         
-        db.collection("users").document(currentUserId).collection("expenses").document(expenseId).setData(expenseData) { [weak self] error in
+        // Save expense to Firebase under client's collection (CORRECT STRUCTURE)
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("expenses").document(expenseId).setData(expenseData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync expense: \(error.localizedDescription)"
@@ -167,7 +177,11 @@ class FirebaseManager: ObservableObject {
     }
     
     func syncProduct(_ product: ClientProduct) {
-        guard let productId = product.id?.uuidString else { return }
+        guard let productId = product.id?.uuidString,
+              let clientId = product.client?.id?.uuidString else { 
+            print("❌ Product or Client ID not found")
+            return 
+        }
         
         let productData: [String: Any] = [
             "id": productId,
@@ -178,7 +192,7 @@ class FirebaseManager: ObservableObject {
             "coverage": product.coverage ?? "",
             "status": product.status ?? "",
             "description": product.assetDescription ?? "",
-            "clientId": product.client?.id?.uuidString ?? "",
+            "clientId": clientId,
             "createdAt": product.createdAt ?? Date(),
             "updatedAt": product.updatedAt ?? Date()
         ]
@@ -189,7 +203,8 @@ class FirebaseManager: ObservableObject {
             return
         }
         
-        db.collection("users").document(currentUserId).collection("products").document(productId).setData(productData) { [weak self] error in
+        // Save product to Firebase under client's collection (CORRECT STRUCTURE)
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("products").document(productId).setData(productData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync product: \(error.localizedDescription)"
@@ -272,7 +287,11 @@ class FirebaseManager: ObservableObject {
     }
     
     func syncTask(_ task: ClientTask) {
-        guard let taskId = task.id?.uuidString else { return }
+        guard let taskId = task.id?.uuidString,
+              let clientId = task.client?.id?.uuidString else { 
+            print("❌ Task or Client ID not found")
+            return 
+        }
         
         let taskData: [String: Any] = [
             "id": taskId,
@@ -281,7 +300,7 @@ class FirebaseManager: ObservableObject {
             "isCompleted": task.isCompleted,
             "createdAt": task.createdAt ?? Date(),
             "updatedAt": task.updatedAt ?? Date(),
-            "clientId": task.client?.id?.uuidString ?? ""
+            "clientId": clientId
         ]
         
         // Get current user ID for user-specific collection
@@ -290,7 +309,8 @@ class FirebaseManager: ObservableObject {
             return
         }
         
-        db.collection("users").document(currentUserId).collection("tasks").document(taskId).setData(taskData) { [weak self] error in
+        // Save task to Firebase under client's collection (CORRECT STRUCTURE)
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("tasks").document(taskId).setData(taskData) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync task: \(error.localizedDescription)"
