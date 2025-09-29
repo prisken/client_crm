@@ -213,7 +213,7 @@ struct DynamicTagSelectionView: View {
     private func saveClientData() {
         // This will be implemented by the parent view
         // For now, we'll use a notification to trigger the save
-        NotificationCenter.default.post(name: .clientDataChanged, object: nil)
+        NotificationCenter.default.post(name: AppConstants.Notifications.clientDataChanged, object: nil)
     }
 }
 

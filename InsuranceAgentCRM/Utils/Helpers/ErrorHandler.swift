@@ -1,171 +1,32 @@
 import Foundation
 import SwiftUI
 
-// MARK: - App Error Protocol
-protocol AppError: Error, LocalizedError {
-    var title: String { get }
-    var message: String { get }
-    var recoverySuggestion: String? { get }
-}
-
-// MARK: - Authentication Errors
-enum AuthenticationError: AppError {
-    case userNotFound
-    case invalidCredentials
-    case accountLocked
-    case sessionExpired
-    case networkError
+// MARK: - Error Types
+enum AppError: LocalizedError {
+    case networkError(String)
+    case dataError(String)
+    case validationError(String)
+    case authenticationError(String)
+    case firebaseError(String)
+    case coreDataError(String)
+    case unknown(String)
     
-    var title: String {
+    var errorDescription: String? {
         switch self {
-        case .userNotFound:
-            return "User Not Found"
-        case .invalidCredentials:
-            return "Invalid Credentials"
-        case .accountLocked:
-            return "Account Locked"
-        case .sessionExpired:
-            return "Session Expired"
-        case .networkError:
-            return "Network Error"
-        }
-    }
-    
-    var message: String {
-        switch self {
-        case .userNotFound:
-            return "No user found with the provided email address."
-        case .invalidCredentials:
-            return "The email or password you entered is incorrect."
-        case .accountLocked:
-            return "Your account has been locked. Please contact support."
-        case .sessionExpired:
-            return "Your session has expired. Please log in again."
-        case .networkError:
-            return "Unable to connect to the server. Please check your internet connection."
-        }
-    }
-    
-    var recoverySuggestion: String? {
-        switch self {
-        case .userNotFound:
-            return "Please check your email address or create a new account."
-        case .invalidCredentials:
-            return "Please verify your email and password, or reset your password."
-        case .accountLocked:
-            return "Contact our support team to unlock your account."
-        case .sessionExpired:
-            return "Please log in again to continue."
-        case .networkError:
-            return "Check your internet connection and try again."
-        }
-    }
-}
-
-// MARK: - Data Errors
-enum DataError: AppError {
-    case saveFailed
-    case fetchFailed
-    case deleteFailed
-    case validationFailed
-    case syncFailed
-    
-    var title: String {
-        switch self {
-        case .saveFailed:
-            return "Save Failed"
-        case .fetchFailed:
-            return "Fetch Failed"
-        case .deleteFailed:
-            return "Delete Failed"
-        case .validationFailed:
-            return "Validation Failed"
-        case .syncFailed:
-            return "Sync Failed"
-        }
-    }
-    
-    var message: String {
-        switch self {
-        case .saveFailed:
-            return "Unable to save the data. Please try again."
-        case .fetchFailed:
-            return "Unable to retrieve the data. Please try again."
-        case .deleteFailed:
-            return "Unable to delete the item. Please try again."
-        case .validationFailed:
-            return "The data you entered is invalid. Please check your input."
-        case .syncFailed:
-            return "Unable to synchronize data. Please check your connection."
-        }
-    }
-    
-    var recoverySuggestion: String? {
-        switch self {
-        case .saveFailed:
-            return "Try saving again or contact support if the problem persists."
-        case .fetchFailed:
-            return "Refresh the data or restart the app."
-        case .deleteFailed:
-            return "Make sure the item is not in use and try again."
-        case .validationFailed:
-            return "Please correct the highlighted fields and try again."
-        case .syncFailed:
-            return "Check your internet connection and try syncing again."
-        }
-    }
-}
-
-// MARK: - Network Errors
-enum NetworkError: AppError {
-    case noConnection
-    case timeout
-    case serverError(Int)
-    case invalidResponse
-    case unauthorized
-    
-    var title: String {
-        switch self {
-        case .noConnection:
-            return "No Connection"
-        case .timeout:
-            return "Request Timeout"
-        case .serverError:
-            return "Server Error"
-        case .invalidResponse:
-            return "Invalid Response"
-        case .unauthorized:
-            return "Unauthorized"
-        }
-    }
-    
-    var message: String {
-        switch self {
-        case .noConnection:
-            return "No internet connection available."
-        case .timeout:
-            return "The request timed out. Please try again."
-        case .serverError(let code):
-            return "Server error with code \(code)."
-        case .invalidResponse:
-            return "Received an invalid response from the server."
-        case .unauthorized:
-            return "You are not authorized to perform this action."
-        }
-    }
-    
-    var recoverySuggestion: String? {
-        switch self {
-        case .noConnection:
-            return "Check your internet connection and try again."
-        case .timeout:
-            return "Try again in a moment or check your connection."
-        case .serverError:
-            return "The server is experiencing issues. Please try again later."
-        case .invalidResponse:
-            return "Please try again or contact support."
-        case .unauthorized:
-            return "Please log in again or contact support."
+        case .networkError(let message):
+            return "Network Error: \(message)"
+        case .dataError(let message):
+            return "Data Error: \(message)"
+        case .validationError(let message):
+            return "Validation Error: \(message)"
+        case .authenticationError(let message):
+            return "Authentication Error: \(message)"
+        case .firebaseError(let message):
+            return "Firebase Error: \(message)"
+        case .coreDataError(let message):
+            return "Core Data Error: \(message)"
+        case .unknown(let message):
+            return "Unknown Error: \(message)"
         }
     }
 }
@@ -176,65 +37,124 @@ class ErrorHandler: ObservableObject {
     @Published var isShowingError = false
     
     func handle(_ error: Error) {
-        if let appError = error as? AppError {
-            currentError = appError
-        } else {
-            currentError = UnknownError(error)
+        DispatchQueue.main.async {
+            if let appError = error as? AppError {
+                self.currentError = appError
+            } else {
+                self.currentError = .unknown(error.localizedDescription)
+            }
+            self.isShowingError = true
         }
-        isShowingError = true
     }
     
-    func clearError() {
-        currentError = nil
-        isShowingError = false
+    func handle(_ appError: AppError) {
+        DispatchQueue.main.async {
+            self.currentError = appError
+            self.isShowingError = true
+        }
+    }
+    
+    func clear() {
+        DispatchQueue.main.async {
+            self.currentError = nil
+            self.isShowingError = false
+        }
     }
 }
 
-// MARK: - Unknown Error
-struct UnknownError: AppError {
-    let underlyingError: Error
+// MARK: - Error View
+struct ErrorView: View {
+    let error: AppError
+    let onRetry: (() -> Void)?
+    let onDismiss: (() -> Void)?
     
-    init(_ error: Error) {
-        self.underlyingError = error
+    init(error: AppError, onRetry: (() -> Void)? = nil, onDismiss: (() -> Void)? = nil) {
+        self.error = error
+        self.onRetry = onRetry
+        self.onDismiss = onDismiss
     }
     
-    var title: String {
-        return "Unknown Error"
-    }
-    
-    var message: String {
-        return underlyingError.localizedDescription
-    }
-    
-    var recoverySuggestion: String? {
-        return "Please try again or contact support if the problem persists."
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 48))
+                .foregroundColor(.red)
+            
+            Text("Error")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text(error.localizedDescription)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            HStack(spacing: 12) {
+                if let onDismiss = onDismiss {
+                    Button("Dismiss") {
+                        onDismiss()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                
+                if let onRetry = onRetry {
+                    Button("Retry") {
+                        onRetry()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 8)
     }
 }
 
-// MARK: - Error View Modifier
-struct ErrorAlertModifier: ViewModifier {
-    @ObservedObject var errorHandler: ErrorHandler
+// MARK: - Error Alert
+struct ErrorAlert: ViewModifier {
+    @Binding var isPresented: Bool
+    let error: AppError?
+    let onRetry: (() -> Void)?
     
     func body(content: Content) -> some View {
         content
-            .alert(
-                errorHandler.currentError?.title ?? "Error",
-                isPresented: $errorHandler.isShowingError
-            ) {
+            .alert("Error", isPresented: $isPresented) {
+                if let onRetry = onRetry {
+                    Button("Retry") {
+                        onRetry()
+                    }
+                }
                 Button("OK") {
-                    errorHandler.clearError()
+                    isPresented = false
                 }
             } message: {
-                if let error = errorHandler.currentError {
-                    Text(error.message)
+                if let error = error {
+                    Text(error.localizedDescription)
                 }
             }
     }
 }
 
-// MARK: - View Extension for Error Handling
+// MARK: - View Extensions
 extension View {
-    func errorHandling(_ errorHandler: ErrorHandler) -> some View {
-        self.modifier(ErrorAlertModifier(errorHandler: errorHandler))
+    func errorAlert(isPresented: Binding<Bool>, error: AppError?, onRetry: (() -> Void)? = nil) -> some View {
+        self.modifier(ErrorAlert(isPresented: isPresented, error: error, onRetry: onRetry))
+    }
+    
+    func errorOverlay(_ error: AppError?, onRetry: (() -> Void)? = nil) -> some View {
+        self.overlay(
+            Group {
+                if let error = error {
+                    ErrorView(error: error, onRetry: onRetry)
+                        .padding()
+                        .background(Color.black.opacity(0.3))
+                }
+            }
+        )
     }
 }
+
+// MARK: - Logging (moved to Logger.swift)
+// All logging functions are now available in Logger.swift

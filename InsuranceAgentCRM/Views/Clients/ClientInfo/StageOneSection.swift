@@ -45,12 +45,12 @@ struct StageOneSection: View {
                 saveClientData()
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .tagDeleted)) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: AppConstants.Notifications.tagDeleted)) { notification in
             if let data = notification.object as? (tag: String, category: TagCategory) {
                 handleTagDeleted(tag: data.tag, category: data.category)
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .clientDataChanged)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: AppConstants.Notifications.clientDataChanged)) { _ in
             // Save client data immediately when tags are selected/deselected
             saveClientData()
         }

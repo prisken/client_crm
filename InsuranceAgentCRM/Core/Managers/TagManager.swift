@@ -3,12 +3,9 @@ import SwiftUI
 import CoreData
 import FirebaseAuth
 import FirebaseFirestore
-import FirebaseFirestore
 
-// MARK: - Notification Names
-extension Notification.Name {
-    static let tagDeleted = Notification.Name("tagDeleted")
-}
+// MARK: - Notification Names (moved to AppConstants)
+// All notification names are now available through AppConstants.Notifications
 
 // MARK: - Tag Manager
 @MainActor
@@ -413,7 +410,7 @@ class TagManager: ObservableObject {
             objectWillChange.send()
             
             // Post notification for UI updates
-            NotificationCenter.default.post(name: .tagDeleted, object: (tag: tag, category: category))
+            NotificationCenter.default.post(name: AppConstants.Notifications.tagDeleted, object: (tag: tag, category: category))
             
         } catch {
             print("Error deleting tag: \(error)")

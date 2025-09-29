@@ -15,8 +15,8 @@ class ClientsViewModel: ObservableObject {
         let allClientsRequest: NSFetchRequest<Client> = Client.fetchRequest()
         
         do {
-            let allUsers = try context.fetch(allUsersRequest)
-            let allClients = try context.fetch(allClientsRequest)
+            let _ = try context.fetch(allUsersRequest)
+            let _ = try context.fetch(allClientsRequest)
         } catch {
         }
         

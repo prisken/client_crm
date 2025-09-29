@@ -27,7 +27,7 @@ struct EditAssetSheet: View {
                 FormPicker(
                     title: "Asset Type",
                     selection: $type,
-                    options: FormConstants.assetTypes
+                    options: AppConstants.Form.assetTypes
                 )
                 
                 FormTextField(

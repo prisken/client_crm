@@ -13,7 +13,7 @@ struct AddAssetSheet: View {
     @State private var amount = ""
     @State private var description = ""
     
-    private let assetTypes = FormConstants.assetTypes
+    private let assetTypes = AppConstants.Form.assetTypes
     
     var body: some View {
         NavigationView {
@@ -157,8 +157,8 @@ struct AddExpenseSheet: View {
     @State private var frequency = "monthly"
     @State private var description = ""
     
-    private let expenseTypes = FormConstants.expenseTypes
-    private let frequencies = FormConstants.expenseFrequencies
+    private let expenseTypes = AppConstants.Form.expenseTypes
+    private let frequencies = AppConstants.Form.expenseFrequencies
     
     var body: some View {
         NavigationView {

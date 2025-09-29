@@ -40,7 +40,7 @@ struct EditProductSheet: View {
                         FormPicker(
                             title: "Category",
                             selection: $category,
-                            options: FormConstants.productCategories
+                            options: AppConstants.Form.productCategories
                         )
                         
                         FormTextField(
@@ -64,7 +64,7 @@ struct EditProductSheet: View {
                         FormPicker(
                             title: "Status",
                             selection: $status,
-                            options: FormConstants.productStatuses
+                            options: AppConstants.Form.productStatuses
                         )
                         
                         FormTextEditor(

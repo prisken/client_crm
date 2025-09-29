@@ -65,15 +65,15 @@ extension View {
     // MARK: - Card Styles
     func cardStyle() -> some View {
         self
-            .background(Color.backgroundSecondary)
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            .background(AppConstants.Colors.backgroundSecondary)
+            .cornerRadius(AppConstants.UI.cornerRadius)
+            .shadow(color: .black.opacity(AppConstants.UI.shadowOpacity), radius: AppConstants.UI.shadowRadius, x: 0, y: 1)
     }
     
     func primaryCardStyle() -> some View {
         self
-            .background(Color.backgroundPrimary)
-            .cornerRadius(16)
+            .background(AppConstants.Colors.background)
+            .cornerRadius(AppConstants.UI.cornerRadius + 4)
             .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
     }
     
@@ -82,24 +82,24 @@ extension View {
         self
             .foregroundColor(.white)
             .padding()
-            .background(Color.brandPrimary)
-            .cornerRadius(8)
+            .background(AppConstants.Colors.primary)
+            .cornerRadius(AppConstants.UI.mobileCornerRadius)
     }
     
     func secondaryButtonStyle() -> some View {
         self
-            .foregroundColor(.brandPrimary)
+            .foregroundColor(AppConstants.Colors.primary)
             .padding()
-            .background(Color.brandPrimary.opacity(0.1))
-            .cornerRadius(8)
+            .background(AppConstants.Colors.primary.opacity(0.1))
+            .cornerRadius(AppConstants.UI.mobileCornerRadius)
     }
     
     func destructiveButtonStyle() -> some View {
         self
             .foregroundColor(.white)
             .padding()
-            .background(Color.statusError)
-            .cornerRadius(8)
+            .background(AppConstants.Colors.error)
+            .cornerRadius(AppConstants.UI.mobileCornerRadius)
     }
     
     // MARK: - Animation Helpers
@@ -183,12 +183,12 @@ extension View {
     
     func mobileButtonStyle(_ style: MobileButtonStyle = .primary) -> some View {
         self
-            .frame(height: DeviceInfo.mobileButtonHeight)
+            .frame(height: AppConstants.UI.mobileButtonHeight)
             .frame(maxWidth: .infinity)
             .background(style.backgroundColor)
             .foregroundColor(style.foregroundColor)
-            .cornerRadius(DeviceInfo.mobileCornerRadius)
-            .font(.system(size: 16 * DeviceInfo.mobileFontScale, weight: .medium))
+            .cornerRadius(AppConstants.UI.mobileCornerRadius)
+            .font(.system(size: 16 * AppConstants.UI.mobileFontScale, weight: .medium))
     }
     
     func mobileTouchTarget() -> some View {
@@ -232,9 +232,9 @@ enum MobileButtonStyle {
     
     var backgroundColor: Color {
         switch self {
-        case .primary: return .blue
+        case .primary: return AppConstants.Colors.primary
         case .secondary: return Color(.systemGray5)
-        case .destructive: return .red
+        case .destructive: return AppConstants.Colors.error
         }
     }
     
@@ -261,7 +261,7 @@ struct CardModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .background(Color.backgroundSecondary)
+            .background(AppConstants.Colors.backgroundSecondary)
             .cornerRadius(cornerRadius)
             .shadow(color: .black.opacity(shadowOpacity), radius: shadowRadius, x: 0, y: 1)
     }

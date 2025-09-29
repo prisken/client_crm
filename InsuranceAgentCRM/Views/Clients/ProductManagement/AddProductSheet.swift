@@ -29,7 +29,7 @@ struct AddProductSheet: View {
                         .lineLimit(2...4)
                     
                     Picker("Status", selection: $status) {
-                        ForEach(FormConstants.productStatuses, id: \.self) { statusOption in
+                        ForEach(AppConstants.Form.productStatuses, id: \.self) { statusOption in
                             Text(statusOption).tag(statusOption)
                         }
                     }

@@ -93,7 +93,7 @@ struct ClientDetailView: View {
             }
             .mobilePadding()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .tagInputFocused)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: AppConstants.Notifications.tagInputFocused)) { _ in
             // Handle tag input focus - ensure proper keyboard handling
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 // This will trigger the keyboard handling for tag inputs specifically

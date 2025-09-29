@@ -27,7 +27,7 @@ struct EditExpenseSheet: View {
                 FormPicker(
                     title: "Expense Type",
                     selection: $type,
-                    options: FormConstants.expenseTypes
+                    options: AppConstants.Form.expenseTypes
                 )
                 
                 FormTextField(
@@ -39,7 +39,7 @@ struct EditExpenseSheet: View {
                 FormPicker(
                     title: "Frequency",
                     selection: $frequency,
-                    options: FormConstants.expenseFrequencies
+                    options: AppConstants.Form.expenseFrequencies
                 )
                 
                 FormTextEditor(

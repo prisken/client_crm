@@ -1,146 +1,171 @@
 import Foundation
 import SwiftUI
-import UIKit
 
+// MARK: - App Constants
 struct AppConstants {
-    // MARK: - App Information
+    
+    // MARK: - App Info
     struct App {
-        static let name = "Insurance Agent CRM"
-        static let version = "1.0.0"
-        static let bundleIdentifier = "com.insuranceagent.crm.InsuranceAgentCRM"
+        static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.insuranceagent.crm"
+        static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        static let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
     
-    // MARK: - User Defaults Keys
-    struct UserDefaultsKeys {
-        static let isFirstLaunch = "isFirstLaunch"
-        static let lastSyncDate = "lastSyncDate"
-        static let userPreferences = "userPreferences"
-        static let selectedTheme = "selectedTheme"
-        static let notificationsEnabled = "notificationsEnabled"
+    // MARK: - Form Constants
+    struct Form {
+        static let assetTypes = [
+            "Cash", "Savings Account", "Investment", "Property", "Vehicle", 
+            "Jewelry", "Art", "Collectibles", "Business", "Insurance Policy", 
+            "Fixed Asset", "Income", "Other"
+        ]
+        
+        static let expenseTypes = [
+            "Housing", "Food", "Transportation", "Healthcare", "Education",
+            "Entertainment", "Utilities", "Insurance", "Debt", "Fixed", 
+            "Monthly", "Variable", "Annual", "Other"
+        ]
+        
+        static let expenseFrequencies = [
+            "monthly", "quarterly", "annually", "one-time", "Monthly", "Quarterly", "Annually", "One-time", "Variable"
+        ]
+        
+        static let productCategories = [
+            "Life", "Life Insurance", "Health Insurance", "Medical", "Critical Illness", "Auto Insurance", "Home Insurance",
+            "Investment", "Retirement", "Education", "General Insurance", "Savings", "Other"
+        ]
+        
+        static let productStatuses = [
+            "Proposed", "Under Review", "Approved", "Active", "Cancelled", "Expired"
+        ]
     }
     
-    // MARK: - Animation Durations
-    struct Animation {
-        static let short = 0.2
-        static let medium = 0.3
-        static let long = 0.5
-        static let spring = 0.6
-    }
-    
-    // MARK: - Layout Constants
-    struct Layout {
+    // MARK: - UI Constants
+    struct UI {
         static let cornerRadius: CGFloat = 12
-        static let cardPadding: CGFloat = 16
-        static let sectionSpacing: CGFloat = 20
-        static let itemSpacing: CGFloat = 8
-        static let minimumTouchTarget: CGFloat = 44
+        static let cardCornerRadius: CGFloat = 8
+        static let shadowRadius: CGFloat = 2
+        static let shadowOpacity: Double = 0.1
+        
+        static let mobilePadding: CGFloat = 16
+        static let mobileSpacing: CGFloat = 12
+        static let mobileCornerRadius: CGFloat = 8
+        static let mobileButtonHeight: CGFloat = 44
+        static let mobileTouchTarget: CGFloat = 44
+        static let mobileFontScale: CGFloat = 1.0
     }
     
-    // MARK: - API Constants
-    struct API {
-        static let baseURL = "https://api.insuranceagentcrm.com"
-        static let timeout: TimeInterval = 30
-        static let maxRetries = 3
+    // MARK: - Animation Constants
+    struct Animation {
+        static let defaultDuration: Double = 0.3
+        static let fastDuration: Double = 0.2
+        static let slowDuration: Double = 0.5
+        
+        static let defaultEasing = SwiftUI.Animation.easeInOut
+        static let fastEasing = SwiftUI.Animation.easeOut
+        static let slowEasing = SwiftUI.Animation.easeInOut
     }
     
-    // MARK: - Validation Constants
-    struct Validation {
-        static let minPasswordLength = 8
-        static let maxPasswordLength = 50
-        static let minNameLength = 2
-        static let maxNameLength = 50
-        static let maxEmailLength = 100
-        static let maxPhoneLength = 20
-        static let maxNotesLength = 1000
+    // MARK: - Color Constants
+    struct Colors {
+        static let primary = Color.blue
+        static let secondary = Color.gray
+        static let success = Color.green
+        static let warning = Color.orange
+        static let error = Color.red
+        static let background = Color(.systemBackground)
+        static let backgroundSecondary = Color(.systemGray6)
     }
     
-    // MARK: - Date Formats
-    struct DateFormat {
-        static let short = "MMM d, yyyy"
-        static let medium = "MMM d, yyyy 'at' h:mm a"
-        static let long = "EEEE, MMMM d, yyyy 'at' h:mm a"
-        static let timeOnly = "h:mm a"
-        static let dateOnly = "MMM d, yyyy"
-        static let iso8601 = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+    // MARK: - Status Colors
+    struct StatusColors {
+        static let active = Color.green
+        static let approved = Color.blue
+        static let proposed = Color.orange
+        static let underReview = Color.yellow
+        static let cancelled = Color.red
+        static let expired = Color.gray
+        static let notSet = Color.orange
     }
     
     // MARK: - Notification Names
     struct Notifications {
-        static let userDidLogin = Notification.Name("userDidLogin")
-        static let userDidLogout = Notification.Name("userDidLogout")
-        static let dataDidSync = Notification.Name("dataDidSync")
-        static let taskDidComplete = Notification.Name("taskDidComplete")
-        static let clientDidUpdate = Notification.Name("clientDidUpdate")
+        static let tagDeleted = Notification.Name("tagDeleted")
+        static let clientDataChanged = Notification.Name("clientDataChanged")
+        static let tagInputFocused = Notification.Name("tagInputFocused")
     }
     
-    // MARK: - Error Messages
-    struct ErrorMessages {
-        static let networkError = "Network connection error. Please check your internet connection."
-        static let serverError = "Server error. Please try again later."
-        static let validationError = "Please check your input and try again."
-        static let authenticationError = "Authentication failed. Please log in again."
-        static let unknownError = "An unexpected error occurred. Please try again."
+    // MARK: - Firebase Constants
+    struct Firebase {
+        static let usersCollection = "users"
+        static let clientsCollection = "clients"
+        static let universalTagsCollection = "universal_tags"
+        static let tagSelectionsCollection = "tag_selections"
     }
     
-    // MARK: - Success Messages
-    struct SuccessMessages {
-        static let loginSuccess = "Successfully logged in"
-        static let logoutSuccess = "Successfully logged out"
-        static let saveSuccess = "Changes saved successfully"
-        static let deleteSuccess = "Item deleted successfully"
-        static let syncSuccess = "Data synchronized successfully"
+    // MARK: - Core Data Constants
+    struct CoreData {
+        static let modelName = "InsuranceAgentCRM"
+        static let containerName = "InsuranceAgentCRM"
     }
     
-    // MARK: - Feature Flags
-    struct Features {
-        static let enableWhatsAppIntegration = true
-        static let enablePushNotifications = true
-        static let enableAnalytics = true
-        static let enableCrashReporting = true
-        static let enableDarkMode = true
+    // MARK: - API Constants
+    struct API {
+        static let timeout: TimeInterval = 30.0
+        static let retryCount = 3
+        static let retryDelay: TimeInterval = 1.0
     }
     
-    // MARK: - Limits
-    struct Limits {
-        static let maxClientsPerUser = 1000
-        static let maxTasksPerClient = 100
-        static let maxFileSize = 10 * 1024 * 1024 // 10MB
-        static let maxImageSize = 5 * 1024 * 1024 // 5MB
-        static let maxSearchResults = 100
+    // MARK: - Validation Constants
+    struct Validation {
+        static let maxEmailLength = 100
+        static let minNameLength = 1
+        static let maxNameLength = 50
+        static let maxPhoneLength = 20
+        static let minPasswordLength = 8
+        static let maxPasswordLength = 50
+        static let maxNotesLength = 1000
     }
 }
 
-// MARK: - Environment Keys
-struct AppEnvironment {
-    static let isDebug = _isDebugAssertConfiguration()
-    static let isSimulator = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != nil
-    static let isProduction = !isDebug && !isSimulator
-}
-
-// MARK: - Device Information
+// MARK: - Device Info
 struct DeviceInfo {
-    static let isIPad = UIDevice.current.userInterfaceIdiom == .pad
-    static let isIPhone = UIDevice.current.userInterfaceIdiom == .phone
-    static let screenWidth = UIScreen.main.bounds.width
-    static let screenHeight = UIScreen.main.bounds.height
-    static let isSmallScreen = screenWidth < 375
-    static let isLargeScreen = screenWidth > 414
-    static let isCompactWidth = screenWidth < 768 // iPad Pro 11" and below, all iPhones
-    static let isRegularWidth = !isCompactWidth // iPad Pro 12.9" and larger
+    static var isIPhone: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone
+    }
     
-    // MARK: - Mobile Optimization Constants (Compact Layout)
-    static let mobilePadding: CGFloat = isIPhone ? 12 : 20
-    static let mobileSpacing: CGFloat = isIPhone ? 8 : 16
-    static let mobileCornerRadius: CGFloat = isIPhone ? 8 : 16
-    static let mobileButtonHeight: CGFloat = isIPhone ? 40 : 44
-    static let mobileTouchTarget: CGFloat = isIPhone ? 44 : 40
-    static let mobileCardPadding: CGFloat = isIPhone ? 12 : 20
-    static let mobileFontScale: CGFloat = isIPhone ? 0.9 : 1.1
+    static var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
     
-    // MARK: - Compact Header Constants
-    static let compactHeaderPadding: CGFloat = isIPhone ? 8 : 16
-    static let compactHeaderSpacing: CGFloat = isIPhone ? 6 : 12
-    static let compactTitleSize: CGFloat = isIPhone ? 16 : 20
-    static let compactSubtitleSize: CGFloat = isIPhone ? 12 : 14
-    static let compactIconSize: CGFloat = isIPhone ? 14 : 16
+    static var isCompactWidth: Bool {
+        UIScreen.main.bounds.width < 768
+    }
+    
+    static var mobilePadding: CGFloat = AppConstants.UI.mobilePadding
+    static var mobileSpacing: CGFloat = AppConstants.UI.mobileSpacing
+    static var mobileCornerRadius: CGFloat = AppConstants.UI.mobileCornerRadius
+    static var mobileButtonHeight: CGFloat = AppConstants.UI.mobileButtonHeight
+    static var mobileTouchTarget: CGFloat = AppConstants.UI.mobileTouchTarget
+    static var mobileFontScale: CGFloat = AppConstants.UI.mobileFontScale
+    static var compactIconSize: CGFloat = 16
+    static var mobileCardPadding: CGFloat = 12
+    static var compactTitleSize: CGFloat = 16
+    static var compactSubtitleSize: CGFloat = 12
+    static var compactHeaderSpacing: CGFloat = 12
+    static var compactHeaderPadding: CGFloat = 16
+}
+
+// MARK: - App Environment
+struct AppEnvironment {
+    static var isDebug: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+    
+    static var isRelease: Bool {
+        return !isDebug
+    }
 }

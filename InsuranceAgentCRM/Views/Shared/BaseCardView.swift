@@ -48,54 +48,5 @@ struct BaseCardView<Content: View>: View {
     }
 }
 
-// MARK: - Card Content Components
-struct CardTitle: View {
-    let title: String
-    
-    var body: some View {
-        Text(title)
-            .font(.subheadline)
-            .fontWeight(.medium)
-    }
-}
-
-struct CardAmount: View {
-    let amount: Double
-    let color: Color
-    
-    var body: some View {
-        Text("$\(amount, specifier: "%.2f")")
-            .font(.caption)
-            .fontWeight(.semibold)
-            .foregroundColor(color)
-    }
-}
-
-struct CardDescription: View {
-    let description: String?
-    
-    var body: some View {
-        if let description = description, !description.isEmpty {
-            Text(description)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-        }
-    }
-}
-
-struct CardStatusBadge: View {
-    let status: String
-    let color: Color
-    
-    var body: some View {
-        Text(status)
-            .font(.caption)
-            .fontWeight(.medium)
-            .foregroundColor(color)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.2))
-            .cornerRadius(4)
-    }
-}
+// MARK: - Card Content Components (moved to CommonComponents)
+// All card components are now available in CommonComponents.swift

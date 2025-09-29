@@ -621,7 +621,7 @@ class FirebaseManager: ObservableObject {
             querySnapshot?.documents.forEach { document in
                 let data = document.data()
                 if let category = data["category"] as? String,
-                   let name = data["name"] as? String {
+                   let _ = data["name"] as? String {
                     if tagsByCategory[category] == nil {
                         tagsByCategory[category] = [:]
                     }
