@@ -304,11 +304,15 @@ class FirebaseManager: ObservableObject {
     // MARK: - Fetch Data from Firebase
     func fetchAllData(context: NSManagedObjectContext) {
         guard isConnected else {
-            syncError = "Firebase not connected"
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+                self.isSyncing = false
+            }
             return
         }
         
         isSyncing = true
+        syncError = nil
         
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
@@ -319,25 +323,42 @@ class FirebaseManager: ObservableObject {
             return
         }
         
+        print("🔄 Fetching all data for user: \(currentUserId)")
+        
         // Fetch clients from Firebase (user-specific collection)
         db.collection("users").document(currentUserId).collection("clients").getDocuments { [weak self] snapshot, error in
-            if let error = error {
-                self?.syncError = "Error fetching clients: \(error.localizedDescription)"
-                return
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Error fetching clients: \(error.localizedDescription)"
+                    self?.isSyncing = false
+                    print("❌ Error fetching clients: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No client documents found")
+                    self?.fetchAssets(context: context)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) client documents")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateClient(from: data, context: context)
+                }
+                
+                // Save context after clients
+                do {
+                    try context.save()
+                    print("✅ Clients saved to Core Data")
+                } catch {
+                    print("❌ Error saving clients: \(error.localizedDescription)")
+                }
+                
+                // Fetch assets
+                self?.fetchAssets(context: context)
             }
-            
-            guard let documents = snapshot?.documents else {
-                self?.syncError = "No client data found"
-                return
-            }
-            
-            for document in documents {
-                let data = document.data()
-                self?.createOrUpdateClient(from: data, context: context)
-            }
-            
-            // Fetch assets
-            self?.fetchAssets(context: context)
         }
     }
     
@@ -345,23 +366,46 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
             return
         }
         
         db.collection("users").document(currentUserId).collection("assets").getDocuments { [weak self] snapshot, error in
-            if let error = error {
-                return
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching assets: \(error.localizedDescription)")
+                    self?.syncError = "Error fetching assets: \(error.localizedDescription)"
+                    self?.isSyncing = false
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No asset documents found")
+                    self?.fetchExpenses(context: context)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) asset documents")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateAsset(from: data, context: context)
+                }
+                
+                // Save context after assets
+                do {
+                    try context.save()
+                    print("✅ Assets saved to Core Data")
+                } catch {
+                    print("❌ Error saving assets: \(error.localizedDescription)")
+                }
+                
+                // Fetch expenses
+                self?.fetchExpenses(context: context)
             }
-            
-            guard let documents = snapshot?.documents else { return }
-            
-            for document in documents {
-                let data = document.data()
-                self?.createOrUpdateAsset(from: data, context: context)
-            }
-            
-            // Fetch expenses
-            self?.fetchExpenses(context: context)
         }
     }
     
@@ -369,23 +413,46 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
             return
         }
         
         db.collection("users").document(currentUserId).collection("expenses").getDocuments { [weak self] snapshot, error in
-            if let error = error {
-                return
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching expenses: \(error.localizedDescription)")
+                    self?.syncError = "Error fetching expenses: \(error.localizedDescription)"
+                    self?.isSyncing = false
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No expense documents found")
+                    self?.fetchProducts(context: context)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) expense documents")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateExpense(from: data, context: context)
+                }
+                
+                // Save context after expenses
+                do {
+                    try context.save()
+                    print("✅ Expenses saved to Core Data")
+                } catch {
+                    print("❌ Error saving expenses: \(error.localizedDescription)")
+                }
+                
+                // Fetch products
+                self?.fetchProducts(context: context)
             }
-            
-            guard let documents = snapshot?.documents else { return }
-            
-            for document in documents {
-                let data = document.data()
-                self?.createOrUpdateExpense(from: data, context: context)
-            }
-            
-            // Fetch products
-            self?.fetchProducts(context: context)
         }
     }
     
@@ -393,31 +460,107 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
             return
         }
         
         db.collection("users").document(currentUserId).collection("products").getDocuments { [weak self] snapshot, error in
             DispatchQueue.main.async {
-                self?.isSyncing = false
                 if let error = error {
+                    print("❌ Error fetching products: \(error.localizedDescription)")
+                    self?.syncError = "Error fetching products: \(error.localizedDescription)"
+                    self?.isSyncing = false
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
-                    self?.lastSyncDate = Date()
-                    print("✅ All data fetched from Firebase")
+                    print("ℹ️ No product documents found")
+                    self?.finishFetch(context: context)
                     return
                 }
+                
+                print("📥 Found \(documents.count) product documents")
                 
                 for document in documents {
                     let data = document.data()
                     self?.createOrUpdateProduct(from: data, context: context)
                 }
                 
-                self?.lastSyncDate = Date()
-                print("✅ All data fetched from Firebase")
+                // Save context after products
+                do {
+                    try context.save()
+                    print("✅ Products saved to Core Data")
+                } catch {
+                    print("❌ Error saving products: \(error.localizedDescription)")
+                }
+                
+                self?.fetchTasks(context: context)
             }
         }
+    }
+    
+    private func fetchTasks(context: NSManagedObjectContext) {
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("tasks").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching tasks: \(error.localizedDescription)")
+                    self?.syncError = "Error fetching tasks: \(error.localizedDescription)"
+                    self?.isSyncing = false
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No task documents found")
+                    self?.finishFetch(context: context)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) task documents")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateTask(from: data, context: context)
+                }
+                
+                // Save context after tasks
+                do {
+                    try context.save()
+                    print("✅ Tasks saved to Core Data")
+                } catch {
+                    print("❌ Error saving tasks: \(error.localizedDescription)")
+                }
+                
+                self?.finishFetch(context: context)
+            }
+        }
+    }
+    
+    private func finishFetch(context: NSManagedObjectContext) {
+        // Final save and completion
+        do {
+            try context.save()
+            print("✅ Final context save successful")
+        } catch {
+            print("❌ Error in final context save: \(error.localizedDescription)")
+            syncError = "Error saving data: \(error.localizedDescription)"
+        }
+        
+        lastSyncDate = Date()
+        isSyncing = false
+        print("✅ All data fetched and saved from Firebase")
     }
     
     // MARK: - Helper Functions for Creating/Updating Entities
@@ -488,7 +631,7 @@ class FirebaseManager: ObservableObject {
             }
         }
         
-        try? context.save()
+        // Context will be saved in batch after all data is fetched
     }
     
     private func createOrUpdateAsset(from data: [String: Any], context: NSManagedObjectContext) {
@@ -529,7 +672,7 @@ class FirebaseManager: ObservableObject {
             }
         }
         
-        try? context.save()
+        // Context will be saved in batch after all data is fetched
     }
     
     private func createOrUpdateExpense(from data: [String: Any], context: NSManagedObjectContext) {
@@ -571,7 +714,7 @@ class FirebaseManager: ObservableObject {
             }
         }
         
-        try? context.save()
+        // Context will be saved in batch after all data is fetched
     }
     
     private func createOrUpdateProduct(from data: [String: Any], context: NSManagedObjectContext) {
@@ -615,6 +758,46 @@ class FirebaseManager: ObservableObject {
             }
         }
         
-        try? context.save()
+        // Context will be saved in batch after all data is fetched
+    }
+    
+    private func createOrUpdateTask(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let idString = data["id"] as? String,
+              let id = UUID(uuidString: idString) else { return }
+        
+        let request: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        let task: ClientTask
+        do {
+            let existingTasks = try context.fetch(request)
+            if let existingTask = existingTasks.first {
+                task = existingTask
+            } else {
+                task = ClientTask(context: context)
+                task.id = id
+            }
+        } catch {
+            task = ClientTask(context: context)
+            task.id = id
+        }
+        
+        task.title = data["title"] as? String
+        task.notes = data["notes"] as? String
+        task.isCompleted = data["isCompleted"] as? Bool ?? false
+        task.createdAt = data["createdAt"] as? Date ?? Date()
+        task.updatedAt = data["updatedAt"] as? Date ?? Date()
+        
+        // Link to client if clientId exists
+        if let clientIdString = data["clientId"] as? String,
+           let clientId = UUID(uuidString: clientIdString) {
+            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+            clientRequest.predicate = NSPredicate(format: "id == %@", clientId as CVarArg)
+            if let client = try? context.fetch(clientRequest).first {
+                task.client = client
+            }
+        }
+        
+        // Context will be saved in batch after all data is fetched
     }
 }
