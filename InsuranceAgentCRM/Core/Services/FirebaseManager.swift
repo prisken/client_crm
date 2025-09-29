@@ -661,46 +661,42 @@ class FirebaseManager: ObservableObject {
             client.tags = tags as NSObject
         }
         
-        // Associate client with the correct user
-        if let ownerIdString = data["ownerId"] as? String,
-           let ownerId = UUID(uuidString: ownerIdString) {
-            // Find the user by ID
+        // Associate client with the current authenticated user (not the ownerId from Firebase)
+        // This ensures the client appears for the current user regardless of who originally created it
+        if let currentUserId = Auth.auth().currentUser?.uid {
+            // Find the current user by Firebase UID (stored in email or another field)
             let userRequest: NSFetchRequest<User> = User.fetchRequest()
-            userRequest.predicate = NSPredicate(format: "id == %@", ownerId as CVarArg)
-            if let user = try? context.fetch(userRequest).first {
-                client.owner = user
-                print("✅ Client associated with user: \(user.email ?? "unknown")")
+            // Try to find user by email first (most reliable)
+            if let currentUserEmail = Auth.auth().currentUser?.email {
+                userRequest.predicate = NSPredicate(format: "email == %@", currentUserEmail)
+                if let user = try? context.fetch(userRequest).first {
+                    client.owner = user
+                    print("✅ Client associated with current user: \(user.email ?? "unknown")")
+                } else {
+                    print("⚠️ Current user not found in Core Data, creating new user")
+                    // Create the current user if not found
+                    let newUser = User(context: context)
+                    newUser.id = UUID()
+                    newUser.email = currentUserEmail
+                    newUser.passwordHash = "firebase_user"
+                    newUser.role = "agent"
+                    newUser.createdAt = Date()
+                    newUser.updatedAt = Date()
+                    client.owner = newUser
+                    print("✅ Created and associated client with new user: \(currentUserEmail)")
+                }
             } else {
-                print("⚠️ User with ID \(ownerIdString) not found, creating fallback")
-                // Create a fallback user if not found
-                let fallbackUser = User(context: context)
-                fallbackUser.id = ownerId
-                fallbackUser.email = "fallback@example.com"
-                fallbackUser.passwordHash = "fallback_hash"
-                fallbackUser.role = "agent"
-                fallbackUser.createdAt = Date()
-                fallbackUser.updatedAt = Date()
-                client.owner = fallbackUser
+                // Fallback: use any existing user
+                userRequest.fetchLimit = 1
+                if let anyUser = try? context.fetch(userRequest).first {
+                    client.owner = anyUser
+                    print("✅ Client associated with fallback user: \(anyUser.email ?? "unknown")")
+                } else {
+                    print("❌ No users found in Core Data")
+                }
             }
-        } else if client.owner == nil {
-            // Fallback: associate with current user if no ownerId in data
-            let userRequest: NSFetchRequest<User> = User.fetchRequest()
-            userRequest.fetchLimit = 1
-            if let currentUser = try? context.fetch(userRequest).first {
-                client.owner = currentUser
-                print("✅ Client associated with current user: \(currentUser.email ?? "unknown")")
-            } else {
-                print("⚠️ No current user found, creating fallback user")
-                // Create a fallback user if no current user exists
-                let fallbackUser = User(context: context)
-                fallbackUser.id = UUID()
-                fallbackUser.email = "fallback@example.com"
-                fallbackUser.passwordHash = "fallback_hash"
-                fallbackUser.role = "agent"
-                fallbackUser.createdAt = Date()
-                fallbackUser.updatedAt = Date()
-                client.owner = fallbackUser
-            }
+        } else {
+            print("❌ No authenticated Firebase user found")
         }
         
         // Context will be saved in batch after all data is fetched
