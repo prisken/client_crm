@@ -71,6 +71,9 @@ struct AddAssetSheet: View {
         print("🔄 Asset client set: \(asset.client?.firstName ?? "nil") \(asset.client?.lastName ?? "nil")")
         
         do {
+            // Clean up any orphaned entities before saving
+            cleanupOrphanedEntities()
+            
             try context.save()
             print("✅ Asset saved successfully to Core Data")
             
@@ -83,6 +86,60 @@ struct AddAssetSheet: View {
             print("✅ Asset sheet dismissed")
         } catch {
             print("❌ Error saving asset: \(error)")
+        }
+    }
+    
+    private func cleanupOrphanedEntities() {
+        // Delete orphaned ClientProducts
+        let productRequest: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
+        productRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedProducts = try context.fetch(productRequest)
+            for product in orphanedProducts {
+                context.delete(product)
+                print("🗑️ Deleted orphaned product: \(product.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned products: \(error)")
+        }
+        
+        // Delete orphaned Assets
+        let assetRequest: NSFetchRequest<Asset> = Asset.fetchRequest()
+        assetRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedAssets = try context.fetch(assetRequest)
+            for asset in orphanedAssets {
+                context.delete(asset)
+                print("🗑️ Deleted orphaned asset: \(asset.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned assets: \(error)")
+        }
+        
+        // Delete orphaned Expenses
+        let expenseRequest: NSFetchRequest<Expense> = Expense.fetchRequest()
+        expenseRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedExpenses = try context.fetch(expenseRequest)
+            for expense in orphanedExpenses {
+                context.delete(expense)
+                print("🗑️ Deleted orphaned expense: \(expense.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned expenses: \(error)")
+        }
+        
+        // Delete orphaned ClientTasks
+        let taskRequest: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
+        taskRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedTasks = try context.fetch(taskRequest)
+            for task in orphanedTasks {
+                context.delete(task)
+                print("🗑️ Deleted orphaned task: \(task.title ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned tasks: \(error)")
         }
     }
 }
@@ -165,6 +222,9 @@ struct AddExpenseSheet: View {
         print("🔄 Expense client set: \(expense.client?.firstName ?? "nil") \(expense.client?.lastName ?? "nil")")
         
         do {
+            // Clean up any orphaned entities before saving
+            cleanupOrphanedEntities()
+            
             try context.save()
             print("✅ Expense saved successfully to Core Data")
             
@@ -177,6 +237,60 @@ struct AddExpenseSheet: View {
             print("✅ Expense sheet dismissed")
         } catch {
             print("❌ Error saving expense: \(error)")
+        }
+    }
+    
+    private func cleanupOrphanedEntities() {
+        // Delete orphaned ClientProducts
+        let productRequest: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
+        productRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedProducts = try context.fetch(productRequest)
+            for product in orphanedProducts {
+                context.delete(product)
+                print("🗑️ Deleted orphaned product: \(product.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned products: \(error)")
+        }
+        
+        // Delete orphaned Assets
+        let assetRequest: NSFetchRequest<Asset> = Asset.fetchRequest()
+        assetRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedAssets = try context.fetch(assetRequest)
+            for asset in orphanedAssets {
+                context.delete(asset)
+                print("🗑️ Deleted orphaned asset: \(asset.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned assets: \(error)")
+        }
+        
+        // Delete orphaned Expenses
+        let expenseRequest: NSFetchRequest<Expense> = Expense.fetchRequest()
+        expenseRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedExpenses = try context.fetch(expenseRequest)
+            for expense in orphanedExpenses {
+                context.delete(expense)
+                print("🗑️ Deleted orphaned expense: \(expense.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned expenses: \(error)")
+        }
+        
+        // Delete orphaned ClientTasks
+        let taskRequest: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
+        taskRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedTasks = try context.fetch(taskRequest)
+            for task in orphanedTasks {
+                context.delete(task)
+                print("🗑️ Deleted orphaned task: \(task.title ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned tasks: \(error)")
         }
     }
 }
