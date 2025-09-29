@@ -39,15 +39,19 @@ struct AddAssetSheet: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
+                        print("🔄 Save Asset button tapped")
                         saveAsset()
                     }
                     .disabled(name.isEmpty || type.isEmpty || amount.isEmpty)
+                    .mobileTouchTarget()
                 }
             }
         }
     }
     
     private func saveAsset() {
+        print("🔄 Starting to save asset: \(name)")
+        
         let asset = Asset(context: context)
         asset.id = UUID()
         asset.name = name
@@ -60,13 +64,15 @@ struct AddAssetSheet: View {
         
         do {
             try context.save()
-            print("✅ Asset saved successfully")
+            print("✅ Asset saved successfully to Core Data")
             
             // Sync asset to Firebase
             firebaseManager.syncAsset(asset)
+            print("✅ Asset synced to Firebase")
             
             onSave()
             dismiss()
+            print("✅ Asset sheet dismissed")
         } catch {
             print("❌ Error saving asset: \(error)")
         }
@@ -118,15 +124,19 @@ struct AddExpenseSheet: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
+                        print("🔄 Save Expense button tapped")
                         saveExpense()
                     }
                     .disabled(name.isEmpty || type.isEmpty || amount.isEmpty)
+                    .mobileTouchTarget()
                 }
             }
         }
     }
     
     private func saveExpense() {
+        print("🔄 Starting to save expense: \(name)")
+        
         let expense = Expense(context: context)
         expense.id = UUID()
         expense.name = name
@@ -140,14 +150,17 @@ struct AddExpenseSheet: View {
         
         do {
             try context.save()
+            print("✅ Expense saved successfully to Core Data")
             
             // Sync expense to Firebase
             firebaseManager.syncExpense(expense)
+            print("✅ Expense synced to Firebase")
             
             onSave()
             dismiss()
+            print("✅ Expense sheet dismissed")
         } catch {
-            print("Error saving expense: \(error)")
+            print("❌ Error saving expense: \(error)")
         }
     }
 }

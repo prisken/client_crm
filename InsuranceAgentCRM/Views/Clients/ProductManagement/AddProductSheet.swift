@@ -46,15 +46,19 @@ struct AddProductSheet: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
+                        print("🔄 Save Product button tapped")
                         saveProduct()
                     }
                     .disabled(name.isEmpty || amount.isEmpty || premium.isEmpty)
+                    .mobileTouchTarget()
                 }
             }
         }
     }
     
     private func saveProduct() {
+        print("🔄 Starting to save product: \(name)")
+        
         let product = ClientProduct(context: context)
         product.id = UUID()
         product.name = name
@@ -70,14 +74,17 @@ struct AddProductSheet: View {
         
         do {
             try context.save()
+            print("✅ Product saved successfully to Core Data")
             
             // Sync product to Firebase
             firebaseManager.syncProduct(product)
+            print("✅ Product synced to Firebase")
             
             onSave()
             dismiss()
+            print("✅ Product sheet dismissed")
         } catch {
-            print("Error saving product: \(error)")
+            print("❌ Error saving product: \(error)")
         }
     }
 }
