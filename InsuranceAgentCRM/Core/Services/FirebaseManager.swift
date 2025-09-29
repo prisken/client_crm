@@ -705,6 +705,9 @@ class FirebaseManager: ObservableObject {
         
         print("🔄 Fetching all data for user: \(currentUserId)")
         
+        // Clean up orphaned entities before fetching
+        cleanupOrphanedEntities(context: context)
+        
         // Fetch clients from Firebase (user-specific collection)
         db.collection("users").document(currentUserId).collection("clients").getDocuments { [weak self] snapshot, error in
             DispatchQueue.main.async {
@@ -1465,6 +1468,70 @@ class FirebaseManager: ObservableObject {
                     print("     Value: \(validationError.userInfo[NSValidationValueErrorKey] ?? "Unknown")")
                 }
             }
+        }
+    }
+    
+    private func cleanupOrphanedEntities(context: NSManagedObjectContext) {
+        print("🧹 Cleaning up orphaned entities...")
+        
+        // Delete orphaned ClientProducts
+        let productRequest: NSFetchRequest<ClientProduct> = ClientProduct.fetchRequest()
+        productRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedProducts = try context.fetch(productRequest)
+            for product in orphanedProducts {
+                context.delete(product)
+                print("🗑️ Deleted orphaned product: \(product.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned products: \(error)")
+        }
+        
+        // Delete orphaned Assets
+        let assetRequest: NSFetchRequest<Asset> = Asset.fetchRequest()
+        assetRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedAssets = try context.fetch(assetRequest)
+            for asset in orphanedAssets {
+                context.delete(asset)
+                print("🗑️ Deleted orphaned asset: \(asset.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned assets: \(error)")
+        }
+        
+        // Delete orphaned Expenses
+        let expenseRequest: NSFetchRequest<Expense> = Expense.fetchRequest()
+        expenseRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedExpenses = try context.fetch(expenseRequest)
+            for expense in orphanedExpenses {
+                context.delete(expense)
+                print("🗑️ Deleted orphaned expense: \(expense.name ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned expenses: \(error)")
+        }
+        
+        // Delete orphaned ClientTasks
+        let taskRequest: NSFetchRequest<ClientTask> = ClientTask.fetchRequest()
+        taskRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedTasks = try context.fetch(taskRequest)
+            for task in orphanedTasks {
+                context.delete(task)
+                print("🗑️ Deleted orphaned task: \(task.title ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned tasks: \(error)")
+        }
+        
+        // Save the cleanup
+        do {
+            try context.save()
+            print("✅ Orphaned entities cleanup completed")
+        } catch {
+            print("❌ Error saving cleanup: \(error)")
         }
     }
 }
