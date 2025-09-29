@@ -20,6 +20,18 @@ struct DashboardView: View {
                         Text("Here's your daily overview")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        
+                        // User Email Display
+                        if let userEmail = authManager.currentUser?.email {
+                            HStack {
+                                Image(systemName: "person.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Logged in as: \(userEmail)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.top, 4)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
@@ -171,7 +183,7 @@ struct DashboardView: View {
             firebaseManager.fetchAllData(context: viewContext)
             // Load local data after a short delay to allow Firebase sync
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                viewModel.loadData(context: viewContext)
+                viewModel.loadData(context: viewContext, authManager: authManager)
             }
         }
     }
@@ -239,7 +251,7 @@ struct DashboardView: View {
         
         // Refresh the dashboard data after a delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            viewModel.loadData(context: viewContext)
+            viewModel.loadData(context: viewContext, authManager: authManager)
             isSyncing = false
         }
     }
@@ -383,19 +395,26 @@ class DashboardViewModel: ObservableObject {
     @Published var todayTasks: [Task] = []
     @Published var recentActivity: [ActivityItem] = []
     
-    func loadData(context: NSManagedObjectContext) {
-        loadClientCount(context: context)
+    func loadData(context: NSManagedObjectContext, authManager: AuthenticationManager) {
+        loadClientCount(context: context, authManager: authManager)
         loadTaskCount(context: context)
         loadCommissionData(context: context)
         loadTodayTasks(context: context)
         loadRecentActivity(context: context)
     }
     
-    private func loadClientCount(context: NSManagedObjectContext) {
+    private func loadClientCount(context: NSManagedObjectContext, authManager: AuthenticationManager) {
         let request: NSFetchRequest<Client> = Client.fetchRequest()
+        
+        // Filter by current user only
+        if let currentUser = authManager.currentUser {
+            request.predicate = NSPredicate(format: "owner == %@", currentUser)
+        }
+        
         do {
             totalClients = try context.count(for: request)
         } catch {
+            totalClients = 0
         }
     }
     

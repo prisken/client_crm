@@ -53,6 +53,8 @@ struct ProductsView: View {
             }
         }
         .onAppear {
+            // Fetch from Firebase first, then load local products
+            firebaseManager.fetchAllData(context: viewContext)
             viewModel.loadProducts(context: viewContext)
         }
     }

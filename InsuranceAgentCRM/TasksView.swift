@@ -118,6 +118,10 @@ struct TasksView: View {
                 }
             }
         }
+        .onAppear {
+            // Fetch from Firebase first
+            firebaseManager.fetchAllData(context: viewContext)
+        }
         // No manual loads needed; @FetchRequest autoupdates
     }
     
