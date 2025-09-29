@@ -48,7 +48,6 @@ struct AddAssetSheet: View {
     }
     
     private func saveAsset() {
-        print("🔍 Saving asset: \(name) - \(type) - \(amount)")
         let asset = Asset(context: context)
         asset.id = UUID()
         asset.name = name

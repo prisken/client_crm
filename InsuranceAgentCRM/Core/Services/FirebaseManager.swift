@@ -590,7 +590,6 @@ class FirebaseManager: ObservableObject {
     
     // MARK: - Helper Functions for Creating/Updating Entities
     private func createOrUpdateClient(from data: [String: Any], context: NSManagedObjectContext) {
-        print("🔍 Processing client data: \(data.keys.joined(separator: ", "))")
         guard let idString = data["id"] as? String,
               let id = UUID(uuidString: idString) else { 
             print("❌ Invalid client ID in data: \(data["id"] ?? "nil")")
@@ -629,7 +628,6 @@ class FirebaseManager: ObservableObject {
             } else if let ageString = ageValue as? String, let ageInt = Int(ageString) {
                 client.age = Int16(ageInt)
             } else {
-                print("⚠️ Invalid age value: \(ageValue), setting to 0")
                 client.age = 0
             }
         } else {
@@ -650,7 +648,6 @@ class FirebaseManager: ObservableObject {
             let calendar = Calendar.current
             let defaultDOB = calendar.date(byAdding: .year, value: -30, to: Date()) ?? Date()
             client.dob = defaultDOB
-            print("⚠️ Missing dob field, setting default date: \(defaultDOB)")
         }
         
         // Handle arrays
@@ -679,7 +676,6 @@ class FirebaseManager: ObservableObject {
                     client.owner = user
                     print("✅ Client associated with current user: \(user.email ?? "unknown")")
                 } else {
-                    print("⚠️ Current user not found in Core Data, creating new user")
                     // Create the current user if not found
                     let newUser = User(context: context)
                     newUser.id = UUID()

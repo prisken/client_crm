@@ -96,7 +96,6 @@ struct StageTwoSection: View {
         }
         .onChange(of: isEditMode) { oldValue, newValue in
             if newValue {
-                print("🔧 DEBUG: Edit mode activated for Stage Two - reloading data")
                 viewModel.loadData(client: client, context: viewContext)
             }
         }

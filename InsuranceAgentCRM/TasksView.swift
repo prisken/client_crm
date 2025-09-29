@@ -436,7 +436,6 @@ struct AddTaskView: View {
         
         do {
             clients = try viewContext.fetch(request)
-            print("🔍 Loaded \(clients.count) clients for current user")
         } catch {
             print("❌ Error loading clients: \(error)")
         }

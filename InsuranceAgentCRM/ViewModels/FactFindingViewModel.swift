@@ -8,7 +8,6 @@ class FactFindingViewModel: ObservableObject {
     @Published var showingAddExpense = false
     
     func loadData(client: Client, context: NSManagedObjectContext) {
-        print("🔍 Loading fact finding data for: \(client.firstName ?? "") \(client.lastName ?? "")")
         
         // Load assets
         let assetRequest: NSFetchRequest<Asset> = Asset.fetchRequest()
@@ -17,7 +16,6 @@ class FactFindingViewModel: ObservableObject {
         
         do {
             assets = try context.fetch(assetRequest)
-            print("🔍 Found \(assets.count) assets")
         } catch {
             print("❌ Error fetching assets: \(error)")
         }
@@ -29,7 +27,6 @@ class FactFindingViewModel: ObservableObject {
         
         do {
             expenses = try context.fetch(expenseRequest)
-            print("🔍 Found \(expenses.count) expenses")
         } catch {
             print("❌ Error fetching expenses: \(error)")
         }

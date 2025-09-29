@@ -18,9 +18,6 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            print("🔍 ContentView appeared with context: \(viewContext)")
-            print("🔍 Context persistent store coordinator: \(String(describing: viewContext.persistentStoreCoordinator))")
-            print("🔍 Context persistent stores: \(viewContext.persistentStoreCoordinator?.persistentStores.count ?? 0)")
             authManager.checkAuthenticationStatus()
         }
     }

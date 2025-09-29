@@ -205,14 +205,10 @@ struct AddClientView: View {
         
         do {
             try viewContext.save()
-            print("🔍 Client saved successfully: \(client.firstName ?? "") \(client.lastName ?? "")")
-            print("🔍 Core Data Context: \(viewContext)")
-            print("🔍 Context Persistent Store: \(viewContext.persistentStoreCoordinator?.persistentStores.first?.url?.absoluteString ?? "Unknown")")
             
             // Test if the client was actually saved
             let fetchRequest: NSFetchRequest<Client> = Client.fetchRequest()
             let savedClients = try viewContext.fetch(fetchRequest)
-            print("🔍 Total clients in store after save: \(savedClients.count)")
             
             // Show debug info in UI
             let debugMessage = "Saved: \(client.firstName ?? "") \(client.lastName ?? "")\nTotal clients: \(savedClients.count)\nStore: \(viewContext.persistentStoreCoordinator?.persistentStores.first?.url?.lastPathComponent ?? "Unknown")"
