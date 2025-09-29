@@ -636,6 +636,17 @@ class FirebaseManager: ObservableObject {
         client.createdAt = data["createdAt"] as? Date ?? Date()
         client.updatedAt = data["updatedAt"] as? Date ?? Date()
         
+        // Handle required dob field - set a default date if missing
+        if let dobDate = data["dob"] as? Date {
+            client.dob = dobDate
+        } else {
+            // Set a default date of birth (1 year ago) if not provided
+            let calendar = Calendar.current
+            let defaultDOB = calendar.date(byAdding: .year, value: -30, to: Date()) ?? Date()
+            client.dob = defaultDOB
+            print("⚠️ Missing dob field, setting default date: \(defaultDOB)")
+        }
+        
         // Handle arrays
         if let interests = data["interests"] as? [String] {
             client.interests = interests as NSObject
@@ -658,6 +669,18 @@ class FirebaseManager: ObservableObject {
             userRequest.predicate = NSPredicate(format: "id == %@", ownerId as CVarArg)
             if let user = try? context.fetch(userRequest).first {
                 client.owner = user
+                print("✅ Client associated with user: \(user.email ?? "unknown")")
+            } else {
+                print("⚠️ User with ID \(ownerIdString) not found, creating fallback")
+                // Create a fallback user if not found
+                let fallbackUser = User(context: context)
+                fallbackUser.id = ownerId
+                fallbackUser.email = "fallback@example.com"
+                fallbackUser.passwordHash = "fallback_hash"
+                fallbackUser.role = "agent"
+                fallbackUser.createdAt = Date()
+                fallbackUser.updatedAt = Date()
+                client.owner = fallbackUser
             }
         } else if client.owner == nil {
             // Fallback: associate with current user if no ownerId in data
@@ -665,6 +688,18 @@ class FirebaseManager: ObservableObject {
             userRequest.fetchLimit = 1
             if let currentUser = try? context.fetch(userRequest).first {
                 client.owner = currentUser
+                print("✅ Client associated with current user: \(currentUser.email ?? "unknown")")
+            } else {
+                print("⚠️ No current user found, creating fallback user")
+                // Create a fallback user if no current user exists
+                let fallbackUser = User(context: context)
+                fallbackUser.id = UUID()
+                fallbackUser.email = "fallback@example.com"
+                fallbackUser.passwordHash = "fallback_hash"
+                fallbackUser.role = "agent"
+                fallbackUser.createdAt = Date()
+                fallbackUser.updatedAt = Date()
+                client.owner = fallbackUser
             }
         }
         

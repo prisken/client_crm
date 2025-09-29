@@ -90,7 +90,7 @@ class AuthenticationManager: ObservableObject {
                 user.role = "agent" // Default role
                 user.createdAt = Date()
                 user.updatedAt = Date()
-                user.passwordHash = "" // No need to store password with Firebase
+                user.passwordHash = "firebase_user" // Required field, set to placeholder for Firebase users
                 
                 try context.save()
             }
@@ -166,7 +166,7 @@ class AuthenticationManager: ObservableObject {
                 newUser.role = UserRole.agent.rawValue // Default role
                 newUser.createdAt = Date()
                 newUser.updatedAt = Date()
-                // No password hash needed for Firebase users
+                newUser.passwordHash = "firebase_user" // Required field, set to placeholder for Firebase users
                 
                 try context.save()
                 self.currentUser = newUser
@@ -186,7 +186,7 @@ class AuthenticationManager: ObservableObject {
             let user = CoreDataUser(context: context)
             user.id = UUID()
             user.email = email
-            user.passwordHash = "" // No need to store password hash with Firebase
+            user.passwordHash = "firebase_user" // Required field, set to placeholder for Firebase users
             user.role = role.rawValue
             user.createdAt = Date()
             user.updatedAt = Date()
@@ -203,6 +203,7 @@ class AuthenticationManager: ObservableObject {
             throw error
         }
     }
+    
     
     private func hashPassword(_ password: String) -> String {
         // In production, use proper password hashing (bcrypt, scrypt, etc.)
