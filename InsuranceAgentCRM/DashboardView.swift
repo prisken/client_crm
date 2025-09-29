@@ -657,7 +657,22 @@ struct DashboardView: View {
                 firebaseManager.syncTask(task)
             }
             
+            // Fetch all tags and sync them
+            let tagRequest: NSFetchRequest<Tag> = Tag.fetchRequest()
+            let tags = try viewContext.fetch(tagRequest)
+            for tag in tags {
+                firebaseManager.syncTag(tag)
+            }
+            
+            // Fetch all relationships and sync them
+            let relationshipRequest: NSFetchRequest<ClientRelationship> = ClientRelationship.fetchRequest()
+            let relationships = try viewContext.fetch(relationshipRequest)
+            for relationship in relationships {
+                firebaseManager.syncRelationship(relationship)
+            }
+            
         } catch {
+            print("Error syncing data: \(error)")
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {

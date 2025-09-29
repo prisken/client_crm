@@ -941,6 +941,106 @@ class FirebaseManager: ObservableObject {
                     self?.logDetailedError(error)
                 }
                 
+                self?.fetchTags(context: context)
+            }
+        }
+    }
+    
+    private func fetchTags(context: NSManagedObjectContext) {
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
+            return
+        }
+        
+        print("🔄 Fetching tags for user: \(currentUserId)")
+        
+        // Fetch tags from Firebase (user-specific collection)
+        db.collection("users").document(currentUserId).collection("tags").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Error fetching tags: \(error.localizedDescription)"
+                    self?.isSyncing = false
+                    print("❌ Error fetching tags: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No tag documents found")
+                    self?.fetchRelationships(context: context)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) tag documents")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateTag(from: data, context: context)
+                }
+                
+                // Save tags to Core Data
+                do {
+                    try context.save()
+                    print("✅ Tags saved to Core Data")
+                } catch {
+                    print("❌ Error saving tags: \(error.localizedDescription)")
+                    self?.logDetailedError(error)
+                }
+                
+                self?.fetchRelationships(context: context)
+            }
+        }
+    }
+    
+    private func fetchRelationships(context: NSManagedObjectContext) {
+        // Get current user ID for user-specific collection
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user found"
+                self.isSyncing = false
+            }
+            return
+        }
+        
+        print("🔄 Fetching relationships for user: \(currentUserId)")
+        
+        // Fetch relationships from Firebase (user-specific collection)
+        db.collection("users").document(currentUserId).collection("relationships").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Error fetching relationships: \(error.localizedDescription)"
+                    self?.isSyncing = false
+                    print("❌ Error fetching relationships: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No relationship documents found")
+                    self?.finishFetch(context: context)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) relationship documents")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateRelationship(from: data, context: context)
+                }
+                
+                // Save relationships to Core Data
+                do {
+                    try context.save()
+                    print("✅ Relationships saved to Core Data")
+                } catch {
+                    print("❌ Error saving relationships: \(error.localizedDescription)")
+                    self?.logDetailedError(error)
+                }
+                
                 self?.finishFetch(context: context)
             }
         }
@@ -964,6 +1064,107 @@ class FirebaseManager: ObservableObject {
             self.isSyncing = false
         }
         print("✅ All data fetched and saved from Firebase")
+    }
+    
+    private func createOrUpdateTag(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let idString = data["id"] as? String,
+              let id = UUID(uuidString: idString) else { 
+            print("❌ Invalid tag ID in data: \(data["id"] ?? "nil")")
+            return 
+        }
+        
+        // Check if tag already exists
+        let request: NSFetchRequest<Tag> = Tag.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        do {
+            let existingTags = try context.fetch(request)
+            let tag: Tag
+            
+            if let existingTag = existingTags.first {
+                tag = existingTag
+                print("🔄 Updating existing tag: \(tag.name ?? "Unknown")")
+            } else {
+                tag = Tag(context: context)
+                tag.id = id
+                print("➕ Creating new tag: \(data["name"] as? String ?? "Unknown")")
+            }
+            
+            // Update tag properties
+            tag.name = data["name"] as? String ?? ""
+            tag.category = data["category"] as? String ?? ""
+            tag.createdAt = data["createdAt"] as? Date ?? Date()
+            tag.updatedAt = data["updatedAt"] as? Date ?? Date()
+            
+            // Set owner (you'll need to get current user)
+            // tag.owner = currentUser
+            
+        } catch {
+            print("❌ Error creating/updating tag: \(error.localizedDescription)")
+        }
+    }
+    
+    private func createOrUpdateRelationship(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let idString = data["id"] as? String,
+              let id = UUID(uuidString: idString) else { 
+            print("❌ Invalid relationship ID in data: \(data["id"] ?? "nil")")
+            return 
+        }
+        
+        // Check if relationship already exists
+        let request: NSFetchRequest<ClientRelationship> = ClientRelationship.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        do {
+            let existingRelationships = try context.fetch(request)
+            let relationship: ClientRelationship
+            
+            if let existingRelationship = existingRelationships.first {
+                relationship = existingRelationship
+                print("🔄 Updating existing relationship: \(relationship.relationshipType ?? "Unknown")")
+            } else {
+                relationship = ClientRelationship(context: context)
+                relationship.id = id
+                print("➕ Creating new relationship: \(data["relationshipType"] as? String ?? "Unknown")")
+            }
+            
+            // Update relationship properties
+            relationship.relationshipType = data["relationshipType"] as? String ?? ""
+            relationship.notes = data["notes"] as? String
+            relationship.createdAt = data["createdAt"] as? Date ?? Date()
+            relationship.updatedAt = data["updatedAt"] as? Date ?? Date()
+            relationship.isActive = data["isActive"] as? Bool ?? true
+            
+            // Set clients (you'll need to find them by ID)
+            if let clientAId = data["clientAId"] as? String,
+               let clientBId = data["clientBId"] as? String {
+                // Find clients by ID
+                guard let clientAUUID = UUID(uuidString: clientAId),
+                      let clientBUUID = UUID(uuidString: clientBId) else {
+                    print("❌ Invalid client IDs: \(clientAId), \(clientBId)")
+                    return
+                }
+                
+                let clientARequest: NSFetchRequest<Client> = Client.fetchRequest()
+                clientARequest.predicate = NSPredicate(format: "id == %@", clientAUUID as CVarArg)
+                
+                let clientBRequest: NSFetchRequest<Client> = Client.fetchRequest()
+                clientBRequest.predicate = NSPredicate(format: "id == %@", clientBUUID as CVarArg)
+                
+                do {
+                    let clientA = try context.fetch(clientARequest).first
+                    let clientB = try context.fetch(clientBRequest).first
+                    
+                    relationship.clientA = clientA
+                    relationship.clientB = clientB
+                } catch {
+                    print("❌ Error finding clients for relationship: \(error.localizedDescription)")
+                }
+            }
+            
+        } catch {
+            print("❌ Error creating/updating relationship: \(error.localizedDescription)")
+        }
     }
     
     // MARK: - Helper Functions for Creating/Updating Entities
