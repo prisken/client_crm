@@ -27,6 +27,9 @@ struct ClientsContentView: View {
                             .navigationBarTitleDisplayMode(.inline)
                             .navigationTitle(client.firstName ?? "Client")
                             .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    SyncStatusView(firebaseManager: FirebaseManager.shared)
+                                }
                                 ToolbarItem(placement: .navigationBarTrailing) {
                                     Button(action: {
                                         // Edit client action
@@ -63,6 +66,9 @@ struct ClientsContentView: View {
                             }
                             
                             Spacer()
+                            
+                            // Sync Status
+                            SyncStatusView(firebaseManager: FirebaseManager.shared)
                             
                             // Compact Add Button
                             Button(action: {

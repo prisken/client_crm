@@ -43,6 +43,7 @@
         <relationship name="products" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientProduct" inverseName="client" inverseEntity="ClientProduct"/>
         <relationship name="relationshipsAsA" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientRelationship" inverseName="clientA" inverseEntity="ClientRelationship"/>
         <relationship name="relationshipsAsB" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientRelationship" inverseName="clientB" inverseEntity="ClientRelationship"/>
+        <relationship name="remarks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClientRemark" inverseName="client" inverseEntity="ClientRemark"/>
     </entity>
     <entity name="CommissionTarget" representedClassName="CommissionTarget" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
@@ -211,6 +212,13 @@
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="owner" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="tags" inverseEntity="User"/>
+    </entity>
+    <entity name="ClientRemark" representedClassName="ClientRemark" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="content" optional="NO" attributeType="String"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="client" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="Client" inverseName="remarks" inverseEntity="Client"/>
     </entity>
 </model>
 

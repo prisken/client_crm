@@ -22,6 +22,14 @@ extension Color {
     static let priorityMedium = Color.orange
     static let priorityLow = Color.green
     
+    // MARK: - Product Category Colors
+    static let categoryInvestment = Color(hex: "4A90E2")      // Blue
+    static let categoryMedical = Color(hex: "7ED321")         // Green
+    static let categoryCriticalIllness = Color(hex: "F5A623") // Orange
+    static let categoryLife = Color(hex: "D0021B")            // Red
+    static let categoryGeneralInsurance = Color(hex: "9013FE") // Purple
+    static let categorySavings = Color(hex: "50E3C2")         // Teal
+    
     // MARK: - Background Colors
     static let backgroundPrimary = Color(.systemBackground)
     static let backgroundSecondary = Color(.secondarySystemBackground)
@@ -73,5 +81,25 @@ extension Color {
         
         let rgb: Int = (Int)(red * 255) << 16 | (Int)(green * 255) << 8 | (Int)(blue * 255) << 0
         return String(format: "#%06x", rgb)
+    }
+    
+    /// Returns the appropriate color for a product category
+    static func categoryColor(for category: String) -> Color {
+        switch category.lowercased() {
+        case "investment":
+            return .categoryInvestment
+        case "medical":
+            return .categoryMedical
+        case "critical illness":
+            return .categoryCriticalIllness
+        case "life":
+            return .categoryLife
+        case "general insurance":
+            return .categoryGeneralInsurance
+        case "savings":
+            return .categorySavings
+        default:
+            return .secondary
+        }
     }
 }

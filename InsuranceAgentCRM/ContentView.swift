@@ -62,7 +62,7 @@ struct MainTabView: View {
             }
             
             // Sync Status Bar - Always show for debugging
-            SyncStatusView()
+            SyncStatusView(firebaseManager: FirebaseManager.shared)
                 .padding(DeviceInfo.isIPhone ? 16 : 20)
                 .padding(.bottom, DeviceInfo.isIPhone ? 8 : 12)
         }

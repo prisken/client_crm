@@ -12,6 +12,7 @@ class FirebaseManager: ObservableObject {
     @Published var isSyncing = false
     @Published var lastSyncDate: Date?
     @Published var syncError: String?
+    @Published var pendingSyncCount = 0
     
     private let db = Firestore.firestore()
     
@@ -47,12 +48,29 @@ class FirebaseManager: ObservableObject {
         
         isSyncing = true
         syncError = nil
+        pendingSyncCount = 0 // Reset pending count when starting full sync
         
         // Simulate sync process
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.isSyncing = false
             self.lastSyncDate = Date()
+            self.pendingSyncCount = 0 // Clear pending count after sync
         }
+    }
+    
+    // MARK: - Pending Sync Management
+    func incrementPendingSync() {
+        pendingSyncCount += 1
+    }
+    
+    func decrementPendingSync() {
+        if pendingSyncCount > 0 {
+            pendingSyncCount -= 1
+        }
+    }
+    
+    func resetPendingSync() {
+        pendingSyncCount = 0
     }
     
     func forceSync() {
@@ -67,6 +85,8 @@ class FirebaseManager: ObservableObject {
     // MARK: - Data Operations
     func syncClient(_ client: Client) {
         guard let clientId = client.id?.uuidString else { return }
+        
+        incrementPendingSync()
         
         let clientData: [String: Any] = [
             "id": clientId,
@@ -89,11 +109,13 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            decrementPendingSync()
             return
         }
         
         db.collection("users").document(currentUserId).collection("clients").document(clientId).setData(clientData) { [weak self] error in
             DispatchQueue.main.async {
+                self?.decrementPendingSync()
                 if let error = error {
                     self?.syncError = "Failed to sync client: \(error.localizedDescription)"
                 } else {
@@ -110,6 +132,8 @@ class FirebaseManager: ObservableObject {
             return 
         }
         
+        incrementPendingSync()
+        
         let assetData: [String: Any] = [
             "id": assetId,
             "name": asset.name ?? "",
@@ -124,12 +148,14 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            decrementPendingSync()
             return
         }
         
         // Save asset to Firebase under client's collection (CORRECT STRUCTURE)
         db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("assets").document(assetId).setData(assetData) { [weak self] error in
             DispatchQueue.main.async {
+                self?.decrementPendingSync()
                 if let error = error {
                     self?.syncError = "Failed to sync asset: \(error.localizedDescription)"
                 } else {
@@ -146,6 +172,8 @@ class FirebaseManager: ObservableObject {
             return 
         }
         
+        incrementPendingSync()
+        
         let expenseData: [String: Any] = [
             "id": expenseId,
             "name": expense.name ?? "",
@@ -161,12 +189,14 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            decrementPendingSync()
             return
         }
         
         // Save expense to Firebase under client's collection (CORRECT STRUCTURE)
         db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("expenses").document(expenseId).setData(expenseData) { [weak self] error in
             DispatchQueue.main.async {
+                self?.decrementPendingSync()
                 if let error = error {
                     self?.syncError = "Failed to sync expense: \(error.localizedDescription)"
                 } else {
@@ -182,6 +212,8 @@ class FirebaseManager: ObservableObject {
             print("❌ Product or Client ID not found")
             return 
         }
+        
+        incrementPendingSync()
         
         let productData: [String: Any] = [
             "id": productId,
@@ -200,12 +232,14 @@ class FirebaseManager: ObservableObject {
         // Get current user ID for user-specific collection
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("❌ No authenticated user found")
+            decrementPendingSync()
             return
         }
         
         // Save product to Firebase under client's collection (CORRECT STRUCTURE)
         db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("products").document(productId).setData(productData) { [weak self] error in
             DispatchQueue.main.async {
+                self?.decrementPendingSync()
                 if let error = error {
                     self?.syncError = "Failed to sync product: \(error.localizedDescription)"
                 } else {
@@ -528,6 +562,49 @@ class FirebaseManager: ObservableObject {
             DispatchQueue.main.async {
                 if let error = error {
                     self?.syncError = "Failed to sync remark: \(error.localizedDescription)"
+                } else {
+                    self?.lastSyncDate = Date()
+                }
+            }
+        }
+    }
+    
+    func syncClientRemark(_ remark: ClientRemark) {
+        guard isConnected else {
+            DispatchQueue.main.async {
+                self.syncError = "Firebase not connected"
+            }
+            return
+        }
+        
+        guard let currentUser = Auth.auth().currentUser else {
+            DispatchQueue.main.async {
+                self.syncError = "No authenticated user"
+            }
+            return
+        }
+        
+        guard let remarkId = remark.id?.uuidString,
+              let clientId = remark.client?.id?.uuidString else {
+            DispatchQueue.main.async {
+                self.syncError = "Client Remark or Client ID not found"
+            }
+            return
+        }
+        
+        let data: [String: Any] = [
+            "id": remarkId,
+            "content": remark.content ?? "",
+            "createdAt": remark.createdAt ?? Date(),
+            "updatedAt": remark.updatedAt ?? Date(),
+            "clientId": clientId
+        ]
+        
+        // Save client remark to Firebase under the client's collection
+        db.collection("users").document(currentUser.uid).collection("clients").document(clientId).collection("remarks").document(remarkId).setData(data) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.syncError = "Failed to sync client remark: \(error.localizedDescription)"
                 } else {
                     self?.lastSyncDate = Date()
                 }
@@ -944,6 +1021,15 @@ class FirebaseManager: ObservableObject {
             }
         }
         
+        // Fetch client remarks for all clients
+        for clientId in clientIds {
+            dispatchGroup.enter()
+            fetchClientRemarksForClient(clientId: clientId, context: context) { [weak self] success in
+                if !success { hasErrors = true }
+                dispatchGroup.leave()
+            }
+        }
+        
         // Wait for all fetches to complete
         dispatchGroup.notify(queue: .main) { [weak self] in
             if hasErrors {
@@ -1111,6 +1197,47 @@ class FirebaseManager: ObservableObject {
                     print("✅ Tasks saved to Core Data for client \(clientId)")
                 } catch {
                     print("❌ Error saving tasks for client \(clientId): \(error)")
+                    self?.logDetailedError(error)
+                }
+                
+                completion(true)
+            }
+        }
+    }
+    
+    private func fetchClientRemarksForClient(clientId: String, context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        db.collection("users").document(currentUserId).collection("clients").document(clientId).collection("remarks").getDocuments { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching client remarks for client \(clientId): \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("ℹ️ No client remark documents found for client \(clientId)")
+                    completion(true)
+                    return
+                }
+                
+                print("📥 Found \(documents.count) client remark documents for client \(clientId)")
+                
+                for document in documents {
+                    let data = document.data()
+                    self?.createOrUpdateClientRemark(from: data, context: context)
+                }
+                
+                // Save context after client remarks
+                do {
+                    try context.save()
+                    print("✅ Client remarks saved to Core Data for client \(clientId)")
+                } catch {
+                    print("❌ Error saving client remarks for client \(clientId): \(error)")
                     self?.logDetailedError(error)
                 }
                 
@@ -1892,6 +2019,40 @@ class FirebaseManager: ObservableObject {
         }
     }
     
+    private func createOrUpdateClientRemark(from data: [String: Any], context: NSManagedObjectContext) {
+        guard let remarkId = data["id"] as? String,
+              let clientId = data["clientId"] as? String else {
+            print("❌ Missing client remark ID or client ID")
+            return
+        }
+        
+        // Find existing client remark or create new one
+        let request: NSFetchRequest<ClientRemark> = ClientRemark.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: remarkId) ?? UUID()) as CVarArg)
+        
+        do {
+            let existingRemarks = try context.fetch(request)
+            let remark = existingRemarks.first ?? ClientRemark(context: context)
+            
+            // Set properties
+            remark.id = UUID(uuidString: remarkId)
+            remark.content = data["content"] as? String
+            remark.createdAt = data["createdAt"] as? Date ?? Date()
+            remark.updatedAt = data["updatedAt"] as? Date ?? Date()
+            
+            // Find and set client relationship
+            let clientRequest: NSFetchRequest<Client> = Client.fetchRequest()
+            clientRequest.predicate = NSPredicate(format: "id == %@", (UUID(uuidString: clientId) ?? UUID()) as CVarArg)
+            let clients = try context.fetch(clientRequest)
+            if let client = clients.first {
+                remark.client = client
+            }
+            
+        } catch {
+            print("❌ Error creating/updating client remark: \(error)")
+        }
+    }
+    
     private func cleanupOrphanedEntities(context: NSManagedObjectContext) {
         print("🧹 Cleaning up orphaned entities...")
         
@@ -1945,6 +2106,19 @@ class FirebaseManager: ObservableObject {
             }
         } catch {
             print("❌ Error fetching orphaned tasks: \(error)")
+        }
+        
+        // Delete orphaned ClientRemarks
+        let remarkRequest: NSFetchRequest<ClientRemark> = ClientRemark.fetchRequest()
+        remarkRequest.predicate = NSPredicate(format: "client == nil")
+        do {
+            let orphanedRemarks = try context.fetch(remarkRequest)
+            for remark in orphanedRemarks {
+                context.delete(remark)
+                print("🗑️ Deleted orphaned client remark: \(remark.content ?? "Unknown")")
+            }
+        } catch {
+            print("❌ Error fetching orphaned client remarks: \(error)")
         }
         
         // Save the cleanup

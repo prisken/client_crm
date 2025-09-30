@@ -15,11 +15,22 @@ struct AddProductSheet: View {
     @State private var coverage = ""
     @State private var status = "Proposed"
     @State private var description = ""
+    @State private var selectedCategory = ""
+    
+    private let productCategories = [
+        "Investment", "Medical", "Critical Illness", "Life", "General Insurance", "Savings"
+    ]
     
     var body: some View {
         NavigationView {
             KeyboardAwareForm {
                 Section("Product Details") {
+                    Picker("Category", selection: $selectedCategory) {
+                        ForEach(productCategories, id: \.self) { categoryOption in
+                            Text(categoryOption).tag(categoryOption)
+                        }
+                    }
+                    
                     TextField("Product Name", text: $name)
                     TextField("Coverage Amount", text: $amount)
                         .keyboardType(.decimalPad)
@@ -38,7 +49,7 @@ struct AddProductSheet: View {
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle("Add \(category) Product")
+            .navigationTitle("Add Product")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -49,9 +60,17 @@ struct AddProductSheet: View {
                         print("🔄 Save Product button tapped")
                         saveProduct()
                     }
-                    .disabled(name.isEmpty || amount.isEmpty || premium.isEmpty)
+                    .disabled(name.isEmpty || amount.isEmpty || premium.isEmpty || selectedCategory.isEmpty)
                     .mobileTouchTarget()
                 }
+            }
+        }
+        .onAppear {
+            // Initialize category selection
+            if !category.isEmpty && productCategories.contains(category) {
+                selectedCategory = category
+            } else {
+                selectedCategory = productCategories.first ?? ""
             }
         }
     }
@@ -68,7 +87,7 @@ struct AddProductSheet: View {
         let product = ClientProduct(context: context)
         product.id = UUID()
         product.name = name
-        product.category = category
+        product.category = selectedCategory
         product.amount = NSDecimalNumber(string: amount.isEmpty ? "0" : amount)
         product.premium = NSDecimalNumber(string: premium.isEmpty ? "0" : premium)
         product.coverage = coverage.isEmpty ? nil : coverage

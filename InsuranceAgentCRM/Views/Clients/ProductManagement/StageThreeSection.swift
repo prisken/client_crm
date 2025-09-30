@@ -22,41 +22,64 @@ struct StageThreeSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Stage Three: Product Pairing")
-                .font(.headline)
-                .fontWeight(.semibold)
+            HStack {
+                Text("Stage Three: Product Pairing")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                if isEditMode {
+                    Button("Add Product") {
+                        viewModel.showingAddProduct = true
+                        viewModel.selectedCategory = ""
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+            }
             
-            if isEditMode {
+            if viewModel.products.isEmpty {
                 VStack(spacing: 12) {
-                    ForEach(productCategories, id: \.self) { category in
-                        ProductCategoryView(
-                            category: category,
-                            products: viewModel.products.filter { $0.category == category },
-                            isEditMode: isEditMode,
-                            onAddProduct: {
-                                viewModel.showingAddProduct = true
-                                viewModel.selectedCategory = category
-                            },
-                            onDeleteProduct: { product in
-                                deleteProduct(product)
-                            },
-                            onEditProduct: { product in
-                                productEditManager.startEdit(for: product)
-                            }
-                        )
+                    Image(systemName: "shippingbox")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Products Added")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    if isEditMode {
+                        Text("Tap 'Add Product' to start adding insurance products for this client")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
                     }
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
             } else {
                 VStack(spacing: 12) {
-                    ForEach(productCategories, id: \.self) { category in
-                        ProductCategoryView(
-                            category: category,
-                            products: viewModel.products.filter { $0.category == category },
-                            isEditMode: isEditMode,
-                            onAddProduct: {},
-                            onDeleteProduct: { _ in },
-                            onEditProduct: { _ in }
-                        )
+                    ForEach(viewModel.groupedProducts.keys.sorted(), id: \.self) { category in
+                        if let products = viewModel.groupedProducts[category], !products.isEmpty {
+                            ProductCategoryView(
+                                category: category,
+                                products: products,
+                                isEditMode: isEditMode,
+                                onAddProduct: {
+                                    viewModel.showingAddProduct = true
+                                    viewModel.selectedCategory = category
+                                },
+                                onDeleteProduct: { product in
+                                    deleteProduct(product)
+                                },
+                                onEditProduct: { product in
+                                    productEditManager.startEdit(for: product)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -126,33 +149,36 @@ struct ProductCategoryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(category)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                Spacer()
-                if isEditMode {
-                    Button("Add") {
-                        onAddProduct()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
+                HStack(spacing: 8) {
+                    // Category color indicator
+                    Circle()
+                        .fill(categoryColor)
+                        .frame(width: 12, height: 12)
+                    
+                    Text(category)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(categoryColor)
                 }
-            }
-            
-            if products.isEmpty {
-                Text("No \(category.lowercased()) products")
+                
+                Spacer()
+                Text("\(products.count) product\(products.count == 1 ? "" : "s")")
                     .font(.caption)
                     .foregroundColor(.secondary)
-            } else {
-                ForEach(products) { product in
-                    ProductCardView(
-                        product: product,
-                        isEditMode: isEditMode,
-                        onDelete: { onDeleteProduct(product) },
-                        onEdit: { onEditProduct(product) }
-                    )
-                }
+            }
+            
+            ForEach(products) { product in
+                ProductCardView(
+                    product: product,
+                    isEditMode: isEditMode,
+                    onDelete: { onDeleteProduct(product) },
+                    onEdit: { onEditProduct(product) }
+                )
             }
         }
+    }
+    
+    private var categoryColor: Color {
+        Color.categoryColor(for: category)
     }
 }

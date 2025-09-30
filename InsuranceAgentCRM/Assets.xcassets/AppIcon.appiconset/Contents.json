@@ -49,12 +49,6 @@
       "size" : "60x60"
     },
     {
-      "filename" : "20@2x.png",
-      "idiom" : "ipad",
-      "scale" : "1x",
-      "size" : "20x20"
-    },
-    {
       "filename" : "20@3x.png",
       "idiom" : "ipad",
       "scale" : "2x",
@@ -108,5 +102,3 @@
     "version" : 1
   }
 }
-
-

@@ -90,6 +90,9 @@ struct ClientDetailView: View {
                 
                 // 7. Stage Three: Product Pairing
                 StageThreeSection(client: client, isEditMode: isEditMode)
+                
+                // 8. Client Remarks Section
+                ClientRemarksSection(client: client)
             }
             .mobilePadding()
         }

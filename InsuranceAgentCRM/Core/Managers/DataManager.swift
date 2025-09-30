@@ -143,6 +143,25 @@ class DataManager: ObservableObject {
         return try fetch(request)
     }
     
+    // MARK: - Client Remark Operations
+    func saveClientRemark(_ remark: ClientRemark) throws {
+        remark.updatedAt = Date()
+        try save()
+        logInfo("Client remark saved: \(remark.content ?? "Unknown")")
+    }
+    
+    func deleteClientRemark(_ remark: ClientRemark) throws {
+        try delete(remark)
+        logInfo("Client remark deleted")
+    }
+    
+    func fetchClientRemarks(for client: Client) throws -> [ClientRemark] {
+        let request: NSFetchRequest<ClientRemark> = ClientRemark.fetchRequest()
+        request.predicate = NSPredicate(format: "client == %@", client)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \ClientRemark.createdAt, ascending: false)]
+        return try fetch(request)
+    }
+    
     // MARK: - Batch Operations
     func batchSave() throws {
         try context.save()

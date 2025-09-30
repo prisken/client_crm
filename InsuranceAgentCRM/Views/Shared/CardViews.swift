@@ -80,12 +80,22 @@ struct ProductCardView: View {
             onEdit: onEdit
         ) {
             VStack(alignment: .leading, spacing: 4) {
-                CardTitle(title: product.name ?? "")
+                HStack {
+                    // Category color indicator
+                    Circle()
+                        .fill(categoryColor)
+                        .frame(width: 8, height: 8)
+                    
+                    CardTitle(title: product.name ?? "")
+                    
+                    Spacer()
+                }
                 
                 HStack {
                     Text(product.category ?? "")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .fontWeight(.medium)
+                        .foregroundColor(categoryColor)
                     Spacer()
                     CardStatusBadge(status: product.status?.isEmpty == false ? product.status! : "Not Set", color: statusColor)
                 }
@@ -111,6 +121,10 @@ struct ProductCardView: View {
                 CardDescription(description: product.assetDescription)
             }
         }
+    }
+    
+    private var categoryColor: Color {
+        Color.categoryColor(for: product.category ?? "")
     }
     
     private var statusColor: Color {

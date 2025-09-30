@@ -198,11 +198,15 @@ struct KeyboardAwareScrollView<Content: View>: View {
                 .padding(.bottom, keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + extraPadding : 0)
         }
         .animation(.easeOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
-        .onTapGesture {
-            if dismissOnTap {
-                keyboardManager.dismissKeyboard()
-            }
-        }
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if dismissOnTap {
+                        keyboardManager.dismissKeyboard()
+                    }
+                }
+        )
     }
 }
 
@@ -224,11 +228,15 @@ struct KeyboardAwareForm<Content: View>: View {
             content
         }
         .keyboardAware(extraPadding: extraPadding)
-        .onTapGesture {
-            if dismissOnTap {
-                keyboardManager.dismissKeyboard()
-            }
-        }
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if dismissOnTap {
+                        keyboardManager.dismissKeyboard()
+                    }
+                }
+        )
     }
 }
 

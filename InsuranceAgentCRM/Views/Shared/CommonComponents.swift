@@ -24,11 +24,84 @@ struct FormPicker: View {
     let title: String
     @Binding var selection: String
     let options: [String]
+    @State private var showingPicker = false
     
     var body: some View {
-        Picker(title, selection: $selection) {
-            ForEach(options, id: \.self) { option in
-                Text(option).tag(option)
+        // Use Menu for iOS 14+ for better mobile experience
+        if #available(iOS 14.0, *) {
+            Menu {
+                ForEach(options, id: \.self) { option in
+                    Button(action: {
+                        selection = option
+                    }) {
+                        HStack {
+                            Text(option)
+                            if selection == option {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(title)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text(selection)
+                        .foregroundColor(.secondary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+            }
+        } else {
+            // Fallback to sheet for iOS 13
+            Button(action: {
+                showingPicker = true
+            }) {
+                HStack {
+                    Text(title)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text(selection)
+                        .foregroundColor(.secondary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+            .sheet(isPresented: $showingPicker) {
+                NavigationView {
+                    List {
+                        ForEach(options, id: \.self) { option in
+                            Button(action: {
+                                selection = option
+                                showingPicker = false
+                            }) {
+                                HStack {
+                                    Text(option)
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                    if selection == option {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .navigationTitle(title)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingPicker = false
+                            }
+                        }
+                    }
+                }
             }
         }
     }
